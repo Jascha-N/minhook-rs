@@ -110,6 +110,8 @@ fn test_static_hook_macro() {
 
 #[test]
 #[should_panic]
+// Workaround for broken unwinding on 32-bit MSVC
+#[cfg(not(all(target_env = "msvc", target_arch = "x86")))]
 fn test_static_hook_macro_panic() {
     fn func(x: i32, y: i32) -> i32 {
         x + y
