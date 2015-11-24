@@ -1,0 +1,20 @@
+[package]
+name = "minhook-rs"
+description = "A function hooking library for the Rust programming language"
+version = "0.1.0"
+authors = ["Jascha Neutelings"]
+repository = "https://github.com/Jascha-N/minhook-rs"
+license = "BSD-2-Clause"
+readme = "README.md"
+links = "MinHook"
+build = "build.rs"
+
+[dependencies]
+winapi = { version = "0.2.4", optional = true }
+
+[features]
+nightly = []
+increased_arity = []
+
+[lib]
+name = "minhook"
