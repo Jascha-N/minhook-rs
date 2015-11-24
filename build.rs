@@ -5,7 +5,12 @@ use std::process::Command;
 use std::path::{Path, PathBuf};
 
 fn copy_recursive(from: &Path, to: &Path) -> io::Result<()> {
-    if try!(fs::metadata(from)).is_dir() {
+    // Don't copy .git folder or file
+    if from.file_name().map(|file_name| file_name == ".git").unwrap_or(false) {
+        return Ok(())
+    }
+
+    if try!(fs::metadata(from)).is_dir()  {
         try!(fs::create_dir(to));
         for entry in try!(fs::read_dir(from)) {
             let entry = try!(entry);
@@ -20,10 +25,10 @@ fn copy_recursive(from: &Path, to: &Path) -> io::Result<()> {
     Ok(())
 }
 
-fn patch_project(project: &Path) {
-    let mut src = File::open(project).unwrap();
+fn patch_project(project: &Path) -> io::Result<()> {
+    let mut src = try!(File::open(project));
     let mut data = String::new();
-    src.read_to_string(&mut data).unwrap();
+    try!(src.read_to_string(&mut data));
     mem::drop(src);
 
     let data = data.replace("<RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>",
@@ -31,8 +36,10 @@ fn patch_project(project: &Path) {
                    .replace("<RuntimeLibrary>MultiThreaded</RuntimeLibrary>",
                             "<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>");
 
-    let mut dst = File::create(project).unwrap();
-    dst.write_all(data.as_bytes()).unwrap();
+    let mut dst = try!(File::create(project));
+    try!(dst.write_all(data.as_bytes()));
+
+    Ok(())
 }
 
 fn main() {
@@ -79,9 +86,6 @@ fn main() {
             let version = match env::var("VisualStudioVersion").ok().as_ref().map(|s| s as &str) {
                 Some("14.0") => "VC14",
                 Some("12.0") => "VC12",
-                //Some("11.0") => "VC11",
-                //Some("10.0") => "VC10",
-                //Some("9.0")  => "VC9",
                 Some(_)      => panic!("Unsupported Visual Studio version."),
                 None         => panic!("'VisualStudioVersion' environment variable not set or malformed.")
             };
@@ -91,7 +95,7 @@ fn main() {
             project_path.push(&version);
             project_path.push("libMinHook.vcxproj");
 
-            patch_project(&project_path);
+            patch_project(&project_path).expect("Error patching VS project file");
 
             let status = Command::new("MSBuild")
                                  .arg("/nologo")
