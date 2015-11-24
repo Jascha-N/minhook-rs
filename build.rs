@@ -1,4 +1,5 @@
-use std::{env, fs, io};
+use std::{mem, env, fs, io};
+use std::fs::File;
 use std::io::prelude::*;
 use std::process::Command;
 use std::path::{Path, PathBuf};
@@ -17,6 +18,21 @@ fn copy_recursive(from: &Path, to: &Path) -> io::Result<()> {
     }
 
     Ok(())
+}
+
+fn patch_project(project: &Path) {
+    let mut src = File::open(project).unwrap();
+    let mut data = String::new();
+    src.read_to_string(&mut data).unwrap();
+    mem::drop(src);
+
+    let data = data.replace("<RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>",
+                            "<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>")
+                   .replace("<RuntimeLibrary>MultiThreaded</RuntimeLibrary>",
+                            "<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>");
+
+    let mut dst = File::create(project).unwrap();
+    dst.write_all(data.as_bytes()).unwrap();
 }
 
 fn main() {
@@ -75,6 +91,8 @@ fn main() {
             project_path.push(&version);
             project_path.push("libMinHook.vcxproj");
 
+            patch_project(&project_path);
+
             let status = Command::new("MSBuild")
                                  .arg("/nologo")
                                  .arg("/property:TargetName=MinHook")
@@ -88,6 +106,8 @@ fn main() {
             if !status.success() {
                 panic!("'MSBuild' exited with code: {}.", status.code().unwrap());
             }
+
+            panic!();
         }
 
         abi =>
