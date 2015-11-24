@@ -8,7 +8,7 @@
 
 pub mod ffi;
 
-use std::{error, fmt, mem, ops, ptr, result};
+use std::{error, fmt, mem, ops, result};
 use std::sync::{ONCE_INIT, Once};
 use std::os::raw::c_void;
 
@@ -28,7 +28,7 @@ mod imp {
     use std::os::raw::c_void;
 
     use super::ffi::*;
-    use super::{Error, Result};
+    use super::{FnPointer, Error, Result};
 
     #[inline]
     fn status_to_result(status: MH_STATUS) -> Result<()> {
@@ -46,36 +46,46 @@ mod imp {
     }
 
     #[inline]
-    pub unsafe fn create_hook(target: *mut c_void, detour: *const c_void) -> Result<*const c_void> {
+    pub unsafe fn create_hook(target: FnPointer, detour: FnPointer) -> Result<FnPointer> {
         let mut trampoline: *mut c_void = mem::uninitialized();
 
-        status_to_result(MH_CreateHook(target, detour as *mut _, &mut trampoline as *mut _))
-            .map(|_| trampoline as *const _)
+        status_to_result(MH_CreateHook(target.as_raw_mut(), detour.as_raw_mut(), &mut trampoline as *mut _))
+            .map(|_| FnPointer::from_raw(trampoline))
     }
 
     #[inline]
-    pub unsafe fn remove_hook(target: *mut c_void) -> Result<()> {
-        status_to_result(MH_RemoveHook(target as *mut _))
+    pub unsafe fn remove_hook(target: FnPointer) -> Result<()> {
+        status_to_result(MH_RemoveHook(target.as_raw_mut()))
     }
 
     #[inline]
-    pub unsafe fn enable_hook(target: *mut c_void) -> Result<()> {
-        status_to_result(MH_EnableHook(target as *mut _))
+    pub unsafe fn enable_hook(target: FnPointer) -> Result<()> {
+        status_to_result(MH_EnableHook(target.as_raw_mut()))
     }
 
     #[inline]
-    pub unsafe fn disable_hook(target: *mut c_void) -> Result<()> {
-        status_to_result(MH_DisableHook(target as *mut _))
+    pub unsafe fn disable_hook(target: FnPointer) -> Result<()> {
+        status_to_result(MH_DisableHook(target.as_raw_mut()))
     }
 
     #[inline]
-    pub unsafe fn queue_enable_hook(target: *mut c_void) -> Result<()> {
-        status_to_result(MH_QueueEnableHook(target as *mut _))
+    pub unsafe fn queue_enable_hook(target: FnPointer) -> Result<()> {
+        status_to_result(MH_QueueEnableHook(target.as_raw_mut()))
     }
 
     #[inline]
-    pub unsafe fn queue_disable_hook(target: *mut c_void) -> Result<()> {
-        status_to_result(MH_QueueDisableHook(target as *mut _))
+    pub unsafe fn queue_disable_hook(target: FnPointer) -> Result<()> {
+        status_to_result(MH_QueueDisableHook(target.as_raw_mut()))
+    }
+
+    #[inline]
+    pub unsafe fn queue_enable_hook_all() -> Result<()> {
+        status_to_result(MH_QueueEnableHook(MH_ALL_HOOKS))
+    }
+
+    #[inline]
+    pub unsafe fn queue_disable_hook_all() -> Result<()> {
+        status_to_result(MH_QueueDisableHook(MH_ALL_HOOKS))
     }
 
     #[inline]
@@ -238,7 +248,7 @@ pub fn enable_all_hooks() -> Result<()> {
     try!(initialize());
 
     unsafe {
-        try!(imp::queue_enable_hook(ptr::null_mut()));
+        try!(imp::queue_enable_hook_all());
         imp::apply_queued()
     }
 }
@@ -248,7 +258,7 @@ pub fn disable_all_hooks() -> Result<()> {
     try!(initialize());
 
     unsafe {
-        try!(imp::queue_disable_hook(ptr::null_mut()));
+        try!(imp::queue_disable_hook_all());
         imp::apply_queued()
     }
 }
@@ -267,9 +277,9 @@ pub trait Hook<T: Function> {
     fn set_enabled(&self, enabled: bool) -> Result<()> {
         unsafe {
             if enabled {
-                imp::enable_hook(self.target().as_mut_ptr())
+                imp::enable_hook(self.target().as_ptr())
             } else {
-                imp::disable_hook(self.target().as_mut_ptr())
+                imp::disable_hook(self.target().as_ptr())
             }
         }
     }
@@ -280,9 +290,9 @@ pub trait Hook<T: Function> {
     fn queue_enabled(&self, enabled: bool) -> Result<()> {
         unsafe {
             if enabled {
-                imp::queue_enable_hook(self.target().as_mut_ptr())
+                imp::queue_enable_hook(self.target().as_ptr())
             } else {
-                imp::queue_disable_hook(self.target().as_mut_ptr())
+                imp::queue_disable_hook(self.target().as_ptr())
             }
         }
     }
@@ -333,7 +343,7 @@ impl<T: Function> LocalHook<T> {
     where T: HookableWith<D>, D: Function {
         try!(initialize());
 
-        let trampoline = T::from_ptr(try!(imp::create_hook(target.as_mut_ptr(), detour.as_ptr())));
+        let trampoline = T::from_ptr(try!(imp::create_hook(target.as_ptr(), detour.as_ptr())));
 
         Ok(LocalHook {
             target: Some(target),
@@ -353,7 +363,7 @@ impl<T: Function> LocalHook<T> {
     pub fn destroy(mut self) -> Result<()> {
         let target = mem::replace(&mut self.target, None).unwrap();
 
-        unsafe { imp::remove_hook(target.as_mut_ptr()) }
+        unsafe { imp::remove_hook(target.as_ptr()) }
     }
 }
 
@@ -371,7 +381,7 @@ impl<T: Function> Hook<T> for LocalHook<T> {
 impl<T: Function> Drop for LocalHook<T> {
     fn drop(&mut self) {
         self.target.as_ref().map(|target| unsafe {
-            let _ = imp::remove_hook(target.as_mut_ptr());
+            let _ = imp::remove_hook(target.as_ptr());
         });
     }
 }
@@ -413,7 +423,7 @@ impl<T: Function> StaticHook<T> {
     ///
     /// This method is unsafe since any trampoline function pointers will become dangling after destroying the hook.
     pub unsafe fn destroy(self) -> Result<()> {
-        imp::remove_hook(self.target.as_mut_ptr())
+        imp::remove_hook(self.target.as_ptr())
     }
 }
 
@@ -672,6 +682,25 @@ macro_rules! static_hooks {
 }
 
 
+/// An untyped function pointer.
+pub struct FnPointer(*const c_void);
+
+impl FnPointer {
+    #[inline(always)]
+    fn from_raw(ptr: *const c_void) -> FnPointer {
+        FnPointer(ptr)
+    }
+
+    #[inline(always)]
+    fn as_raw(&self) -> *const c_void {
+        self.0
+    }
+
+    #[inline(always)]
+    fn as_raw_mut(&self) -> *mut c_void {
+        self.0 as *mut _
+    }
+}
 
 /// Trait representing a function that can be used as a target function for hooking.
 #[cfg_attr(feature = "nightly", rustc_on_unimplemented = "The type `{Self}` is not an eligible target function or detour function.")]
@@ -679,20 +708,15 @@ pub trait Function {
     /// The type of this function's wrapper closure.
     type Closure: ?Sized;
 
-    /// Converts this function into a raw pointer.
-    fn as_ptr(&self) -> *const c_void {
-        self.as_mut_ptr()
-    }
-
-    /// Converts this function into a raw mutable pointer.
-    fn as_mut_ptr(&self) -> *mut c_void;
+    /// Converts this function into an untyped function pointer.
+    fn as_ptr(&self) -> FnPointer;
 
     /// Constructs a `Function` from a raw pointer.
     ///
     /// # Unsafety
     ///
     /// This method is unsafe because the argument should point to proper executable memory.
-    unsafe fn from_ptr(ptr: *const c_void) -> Self;
+    unsafe fn from_ptr(ptr: FnPointer) -> Self;
 
     /// Wraps this function in a closure.
     ///
@@ -750,14 +774,17 @@ macro_rules! impl_hookable {
         impl<Ret: 'static, $($arg: 'static),*> $crate::Function for $fun_type {
             type Closure = Fn($($arg),*) -> Ret;
 
-            fn as_mut_ptr(&self) -> *mut c_void {
-                *self as *mut _
+            #[inline(always)]
+            fn as_ptr(&self) -> FnPointer {
+                FnPointer(*self as *mut _)
             }
 
-            unsafe fn from_ptr(ptr: *const c_void) -> Self {
-                mem::transmute(ptr)
+            #[inline(always)]
+            unsafe fn from_ptr(ptr: FnPointer) -> Self {
+                mem::transmute(ptr.as_raw())
             }
 
+            #[inline(always)]
             #[allow(non_snake_case)]
             unsafe fn as_closure(&self) -> Box<Self::Closure> {
                 let f = *self;
