@@ -106,8 +106,6 @@ fn main() {
             if !status.success() {
                 panic!("'MSBuild' exited with code: {}.", status.code().unwrap());
             }
-
-            panic!();
         }
 
         abi =>
