@@ -334,11 +334,17 @@ pub struct LocalHook<T: Function> {
 }
 
 impl<T: Function> LocalHook<T> {
-    /// Creates a new temporary hook given a target function.
+    /// Creates a new temporary hook given a target function and a detour function.
     ///
     /// # Unsafety
     ///
-    /// Hooking relies greatly on implementation details and is thus inherently unsafe.
+    /// The target and detour function pointers should point to valid memory during the lifetime
+    /// of this hook.
+    ///
+    /// While hooking functions with type parameters is possible it is absolutely discouraged.
+    /// Due to optimizations not every concrete implementation of a parameterized function has it's own
+    /// code in the resulting binary. This can lead to situations where a hook is created for more than
+    /// just the the target function and the function signature of the detour function does not match up.
     pub unsafe fn new<D>(target: T, detour: D) -> Result<LocalHook<T>>
     where T: HookableWith<D>, D: Function {
         try!(initialize());
@@ -702,7 +708,7 @@ impl FnPointer {
     }
 }
 
-/// Trait representing a function that can be used as a target function for hooking.
+/// Trait representing a function that can be used as a target function or detour function for hooking.
 #[cfg_attr(feature = "nightly", rustc_on_unimplemented = "The type `{Self}` is not an eligible target function or detour function.")]
 pub trait Function {
     /// The type of this function's wrapper closure.
