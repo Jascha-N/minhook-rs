@@ -63,7 +63,7 @@ fn main() {
     };
 
     let _ = fs::remove_dir_all(&out_dir);
-    copy_recursive(&Path::new(&root_dir).join("minhook"), out_dir.as_ref()).expect("Error copying sources");
+    copy_recursive(&Path::new(&root_dir).join("lib").join("minhook"), out_dir.as_ref()).expect("Error copying sources");
 
     match abi {
         "gnu" => {
