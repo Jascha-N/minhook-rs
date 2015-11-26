@@ -60,8 +60,8 @@ mod hooks {
 }
 
 fn main() {
-    // Initialize the hook
-    init_static_hooks![hooks::MessageBoxA].unwrap();
+	// Initialize the hook
+    hooks::MessageBoxA.initialize().unwrap();
 
     // Call the function
     unsafe {
