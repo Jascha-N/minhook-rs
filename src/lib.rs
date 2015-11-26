@@ -411,20 +411,6 @@ impl<T: Function> StaticHook<T> {
         &self.trampoline
     }
 
-    /// Transforms this static hook into a local hook.
-    ///
-    /// # Unsafety
-    ///
-    /// This method is unsafe since a `StaticHook` gives direct access to the raw trampoline function under the assumption that
-    /// this trampoline will never get destroyed. Turning the hook back into a `LocalHook` can lead to a situation where
-    /// the hook is destroyed causing any trampoline functions pointers to become dangling.
-    pub unsafe fn into_local(self) -> LocalHook<T> {
-        LocalHook {
-            target: Some(self.target),
-            trampoline: Some(self.trampoline),
-        }
-    }
-
     /// Destroys this static hook.
     ///
     /// # Unsafety
