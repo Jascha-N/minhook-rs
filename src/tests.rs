@@ -94,10 +94,10 @@ fn test_static_hook_macro() {
     }
 
     static_hooks! {
-		unsafe hook<fn(i32, i32) -> i32> static_hook(x, y) for func {
-			static_hook(x * 2, y)
-		}
-	}
+        unsafe hook<fn(i32, i32) -> i32> static_hook(x, y) for func {
+            static_hook(x * 2, y)
+        }
+    }
 
     assert_eq!(func(2, 5), 7);
     static_hook.initialize().unwrap();
@@ -124,10 +124,10 @@ fn test_static_hook_macro_panic() {
     };
 
     static_hooks! {
-		unsafe hook<fn(i32, i32) -> i32> static_hook(x, y) for func {
-			static_hook(x * 2, y)
-		}
-	}
+        unsafe hook<fn(i32, i32) -> i32> static_hook(x, y) for func {
+            static_hook(x * 2, y)
+        }
+    }
 
     static_hook(10, 10);
 }

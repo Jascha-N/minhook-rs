@@ -47,39 +47,39 @@ use std::ptr;
 use minhook::prelude::*;
 
 mod hooks {
-	use winapi::{HWND, LPCSTR, UINT, c_int};
+    use winapi::{HWND, LPCSTR, UINT, c_int};
 
-	static_hooks! {
-		// Create a hook for user32::MessageBoxA
-		pub unsafe hook<unsafe extern "system" fn(HWND, LPCSTR, LPCSTR, UINT) -> c_int>
-		MessageBoxA(wnd, text, caption, flags) for ::user32::MessageBoxA {
-			// Switch caption and text and call the original function
-			MessageBoxA(wnd, caption, text, flags)
-		}
-	}
+    static_hooks! {
+        // Create a hook for user32::MessageBoxA
+        pub unsafe hook<unsafe extern "system" fn(HWND, LPCSTR, LPCSTR, UINT) -> c_int>
+        MessageBoxA(wnd, text, caption, flags) for ::user32::MessageBoxA {
+            // Switch caption and text and call the original function
+            MessageBoxA(wnd, caption, text, flags)
+        }
+    }
 }
 
 fn main() {
-	// Initialize the hook
+    // Initialize the hook
     init_static_hooks![hooks::MessageBoxA].unwrap();
 
-	// Call the function
-	unsafe {
-		user32::MessageBoxA(ptr::null_mut(),
-				        	b"Hello\0".as_ptr() as *const _,
-							b"World\0".as_ptr() as *const _,
-							winapi::MB_OK);
-	}
+    // Call the function
+    unsafe {
+        user32::MessageBoxA(ptr::null_mut(),
+                            b"Hello\0".as_ptr() as *const _,
+                            b"World\0".as_ptr() as *const _,
+                            winapi::MB_OK);
+    }
 
-	// Enable the hook
+    // Enable the hook
     hooks::MessageBoxA.set_enabled(true).unwrap();
 
-	// Call the - now hooked - function
-	unsafe {
-		user32::MessageBoxA(ptr::null_mut(),
-							b"Hello\0".as_ptr() as *const _,
-							b"World\0".as_ptr() as *const _,
-							winapi::MB_OK);
-	}
+    // Call the - now hooked - function
+    unsafe {
+        user32::MessageBoxA(ptr::null_mut(),
+                            b"Hello\0".as_ptr() as *const _,
+                            b"World\0".as_ptr() as *const _,
+                            winapi::MB_OK);
+    }
 }
 ```
