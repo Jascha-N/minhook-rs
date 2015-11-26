@@ -366,6 +366,8 @@ impl<T: Function> LocalHook<T> {
     }
 
     /// Safely destroys this hook.
+    ///
+    /// This method returns whether it was succesful as opposed to `drop()`.
     pub fn destroy(mut self) -> Result<()> {
         let target = mem::replace(&mut self.target, None).unwrap();
 
