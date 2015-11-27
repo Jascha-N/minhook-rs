@@ -301,7 +301,9 @@ pub struct ScopedHook<T: Function> {
 }
 
 impl<T: Function> ScopedHook<T> {
-    /// Creates a new `ScopedHook` given a target function and a detour function.
+    /// Install a new `ScopedHook` given a target function and a detour function.
+    ///
+    /// The hook is disabled by default. Call `set_enabled(true)` to enable it.
     ///
     /// # Unsafety
     ///
@@ -312,7 +314,7 @@ impl<T: Function> ScopedHook<T> {
     /// Due to optimizations not every concrete implementation of a parameterized function has it's own
     /// code in the resulting binary. This can lead to situations where a hook is created for more than
     /// just the the target function and the function signature of the detour function does not match up.
-    pub unsafe fn new<D>(target: T, detour: D) -> Result<ScopedHook<T>>
+    pub unsafe fn install<D>(target: T, detour: D) -> Result<ScopedHook<T>>
     where T: HookableWith<D>, D: Function {
         try!(initialize());
 
@@ -608,7 +610,7 @@ macro_rules! static_hooks {
                             let mut result = Ok(());
 
                             INIT.call_once(|| unsafe {
-                                result = ScopedHook::<$fun_type>::new($target as $fun_type, __detour as $fun_type)
+                                result = ScopedHook::<$fun_type>::install($target as $fun_type, __detour as $fun_type)
                                                                  .map(|hook| HOOK = Some(hook.into_static()));
                             });
 

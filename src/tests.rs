@@ -13,8 +13,8 @@ fn test_scoped_hook() {
 
     assert_eq!(func(2, 5), 7);
     let hook = unsafe {
-        ScopedHook::new(func as fn(i32, i32) -> i32,
-                       func_detour as fn(i32, i32) -> i32)
+        ScopedHook::install(func as fn(i32, i32) -> i32,
+                            func_detour as fn(i32, i32) -> i32)
             .unwrap()
     };
 
@@ -44,8 +44,8 @@ fn test_static_hook_locally() {
 
     assert_eq!(func(2, 5), 7);
     let hook = unsafe {
-        ScopedHook::new(func as fn(i32, i32) -> i32,
-                       func_detour as fn(i32, i32) -> i32)
+        ScopedHook::install(func as fn(i32, i32) -> i32,
+                            func_detour as fn(i32, i32) -> i32)
             .unwrap()
     };
 
@@ -72,8 +72,8 @@ fn test_static_hook_statically() {
     }
 
     let hook = unsafe {
-        ScopedHook::new(func as fn(i32, i32) -> i32,
-                       func_detour as fn(i32, i32) -> i32)
+        ScopedHook::install(func as fn(i32, i32) -> i32,
+                            func_detour as fn(i32, i32) -> i32)
             .unwrap()
     };
 
@@ -117,8 +117,8 @@ fn test_static_hook_macro_panic() {
     }
 
     let _hook = unsafe {
-        ScopedHook::new(func as fn(i32, i32) -> i32,
-                       func_detour as fn(i32, i32) -> i32)
+        ScopedHook::install(func as fn(i32, i32) -> i32,
+                            func_detour as fn(i32, i32) -> i32)
             .unwrap()
     };
 
