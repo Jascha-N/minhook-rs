@@ -44,7 +44,7 @@ extern crate winapi;
 extern crate user32;
 
 use std::ptr;
-use minhook::prelude::*;
+use minhook::Hook;
 
 mod hooks {
     use winapi::{HWND, LPCSTR, UINT, c_int};
@@ -54,7 +54,7 @@ mod hooks {
         pub unsafe hook<unsafe extern "system" fn(HWND, LPCSTR, LPCSTR, UINT) -> c_int>
         MessageBoxA(wnd, text, caption, flags) for ::user32::MessageBoxA {
             // Switch caption and text and call the original function
-            MessageBoxA(wnd, caption, text, flags)
+            MessageBoxA.call_real(wnd, caption, text, flags)
         }
     }
 }

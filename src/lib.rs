@@ -14,13 +14,6 @@ use std::os::raw::c_void;
 
 use ffi::MH_STATUS;
 
-/// The minhook-rs prelude.
-///
-/// Glob import this prelude to bring commonly used traits into scope.
-pub mod prelude {
-    pub use super::{Hook, SafeHook};
-}
-
 
 
 mod imp {
@@ -296,32 +289,6 @@ pub trait Hook<T: Function> {
             }
         }
     }
-
-    /// Execute the given closure with the trampoline closure and return the value returned by the closure.
-    ///
-    /// This method can be used to call the original target function.
-    ///
-    /// # Unsafety
-    ///
-    /// This function is unsafe because the hook's target function might have been unsafe. This
-    /// implies that the trampoline closure is also unsafe. Since Rust does not support
-    /// unsafe closures, the possible "unsafety" is conveyed by this method.
-    unsafe fn with_trampoline<F, R>(&self, f: F) -> R where F: FnOnce(&T::Closure) -> R;
-}
-
-/// Trait implemented for all hooks that have safe target functions.
-pub trait SafeHook<T: Function + SafeFunction>: Hook<T> {
-    /// Execute the given closure with the trampoline closure and return the value returned by the closure.
-    ///
-    /// This method can be used to call the original target function.
-    fn with_trampoline_safe<F, R>(&self, f: F) -> R where F: FnOnce(&T::Closure) -> R;
-}
-
-impl<T: Function + SafeFunction, H: Hook<T>> SafeHook<T> for H {
-    fn with_trampoline_safe<F, R>(&self, f: F) -> R
-    where F: FnOnce(&T::Closure) -> R {
-        unsafe { self.with_trampoline(f) }
-    }
 }
 
 
@@ -379,11 +346,6 @@ impl<T: Function> Hook<T> for LocalHook<T> {
     fn target(&self) -> &T {
         self.target.as_ref().unwrap()
     }
-
-    unsafe fn with_trampoline<F, R>(&self, f: F) -> R
-    where F: FnOnce(&T::Closure) -> R {
-        f(&self.trampoline.as_ref().unwrap().as_closure())
-    }
 }
 
 impl<T: Function> Drop for LocalHook<T> {
@@ -425,11 +387,6 @@ impl<T: Function> Hook<T> for StaticHook<T> {
     fn target(&self) -> &T {
         &self.target
     }
-
-    unsafe fn with_trampoline<F, R>(&self, f: F) -> R
-    where F: FnOnce(&T::Closure) -> R {
-        f(&self.trampoline.as_closure())
-    }
 }
 
 impl<T: Function> From<LocalHook<T>> for StaticHook<T> {
@@ -438,13 +395,6 @@ impl<T: Function> From<LocalHook<T>> for StaticHook<T> {
     }
 }
 
-impl<T: Function> ops::Deref for StaticHook<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.trampoline
-    }
-}
 
 
 /// A thread-safe initializer type for a lazily initialized `StaticHook`.
@@ -699,9 +649,6 @@ impl FnPointer {
 /// Trait representing a function that can be used as a target function or detour function for hooking.
 #[cfg_attr(feature = "nightly", rustc_on_unimplemented = "The type `{Self}` is not an eligible target function or detour function.")]
 pub trait Function {
-    /// The type of this function's wrapper closure.
-    type Closure: ?Sized;
-
     /// Converts this function into an untyped function pointer.
     fn as_ptr(&self) -> FnPointer;
 
@@ -711,17 +658,7 @@ pub trait Function {
     ///
     /// This method is unsafe because the argument should point to proper executable memory.
     unsafe fn from_ptr(ptr: FnPointer) -> Self;
-
-    /// Wraps this function in a closure.
-    ///
-    /// # Unsafety
-    ///
-    /// This method is unsafe because creating a closure from a function discards its safety guarantees.
-    unsafe fn as_closure(&self) -> Box<Self::Closure>;
 }
-
-/// Trait representing a function that can be called without unsafe block.
-pub unsafe trait SafeFunction: Function {}
 
 /// Trait representing a "hookable with" relation between a target function and a detour function.
 ///
@@ -758,16 +695,56 @@ macro_rules! impl_hookable {
     };
 
     (impl_pair: ($($arg:ident),*) ($($fun_tokens:tt)+)) => {
-        impl_hookable!(impl_fun: ($($arg),*) (       $($fun_tokens)*));
-        impl_hookable!(impl_fun: ($($arg),*) (unsafe $($fun_tokens)*));
+        impl_hookable!(impl_safe:   ($($arg),*) (       $($fun_tokens)*));
+        impl_hookable!(impl_unsafe: ($($arg),*) (unsafe $($fun_tokens)*));
+    };
 
-        impl_hookable!(make_item: unsafe impl<Ret: 'static, $($arg: 'static),*> $crate::SafeFunction for $($fun_tokens)* {});
+    (impl_safe: ($($arg:ident),*) ($fun_type:ty)) => {
+        impl<Ret: 'static, $($arg: 'static),*> LocalHook<$fun_type> {
+            /// Call the original function.
+            #[inline]
+            #[allow(non_snake_case)]
+            pub fn call_real(&self, $($arg : $arg),*) -> Ret {
+                self.trampoline.unwrap()($($arg),*)
+            }
+        }
+
+        impl<Ret: 'static, $($arg: 'static),*> StaticHook<$fun_type> {
+            /// Call the original function.
+            #[inline]
+            #[allow(non_snake_case)]
+            pub fn call_real(&self, $($arg : $arg),*) -> Ret {
+                (self.trampoline)($($arg),*)
+            }
+        }
+
+        impl_hookable!(impl_fun: ($($arg),*) ($fun_type));
+    };
+
+    (impl_unsafe: ($($arg:ident),*) ($fun_type:ty)) => {
+        impl<Ret: 'static, $($arg: 'static),*> LocalHook<$fun_type> {
+            /// Call the original function.
+            #[inline]
+            #[allow(non_snake_case)]
+            pub unsafe fn call_real(&self, $($arg : $arg),*) -> Ret {
+                self.trampoline.unwrap()($($arg),*)
+            }
+        }
+
+        impl<Ret: 'static, $($arg: 'static),*> StaticHook<$fun_type> {
+            /// Call the original function.
+            #[inline]
+            #[allow(non_snake_case)]
+            pub unsafe fn call_real(&self, $($arg : $arg),*) -> Ret {
+                (self.trampoline)($($arg),*)
+            }
+        }
+
+        impl_hookable!(impl_fun: ($($arg),*) ($fun_type));
     };
 
     (impl_fun: ($($arg:ident),*) ($fun_type:ty)) => {
-        impl<Ret: 'static, $($arg: 'static),*> $crate::Function for $fun_type {
-            type Closure = Fn($($arg),*) -> Ret;
-
+        impl<Ret: 'static, $($arg: 'static),*> Function for $fun_type {
             #[inline(always)]
             fn as_ptr(&self) -> FnPointer {
                 FnPointer(*self as *mut _)
@@ -776,13 +753,6 @@ macro_rules! impl_hookable {
             #[inline(always)]
             unsafe fn from_ptr(ptr: FnPointer) -> Self {
                 mem::transmute(ptr.as_raw())
-            }
-
-            #[inline(always)]
-            #[allow(non_snake_case)]
-            unsafe fn as_closure(&self) -> Box<Self::Closure> {
-                let f = *self;
-                Box::new(move |$($arg),*| f($($arg),*))
             }
         }
 

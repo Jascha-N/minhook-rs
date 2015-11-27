@@ -19,11 +19,11 @@ fn test_local_hook() {
     };
 
     assert_eq!(func(2, 5), 7);
-    assert_eq!(hook.with_trampoline_safe(|f| f(2, 5)), 7);
+    assert_eq!(hook.call_real(2, 5), 7);
 
     hook.set_enabled(true).unwrap();
     assert_eq!(func(2, 5), 10);
-    assert_eq!(hook.with_trampoline_safe(|f| f(2, 5)), 7);
+    assert_eq!(hook.call_real(2, 5), 7);
 
     hook.set_enabled(false).unwrap();
     assert_eq!(func(2, 5), 7);
@@ -53,13 +53,12 @@ fn test_static_hook_locally() {
     let static_hook = hook.into_static();
 
     assert_eq!(func(2, 5), 7);
-    assert_eq!(static_hook(2, 5), 7);
+    assert_eq!(static_hook.call_real(2, 5), 7);
 
     static_hook.set_enabled(true).unwrap();
     assert_eq!(func(2, 5), 10);
-    assert_eq!(static_hook(2, 5), 7);
+    assert_eq!(static_hook.call_real(2, 5), 7);
     assert_eq!(static_hook.trampoline()(2, 5), 7);
-    assert_eq!(static_hook.with_trampoline_safe(|f| f(2, 5)), 7);
 
     mem::drop(static_hook);
 
@@ -95,7 +94,7 @@ fn test_static_hook_macro() {
 
     static_hooks! {
         unsafe hook<fn(i32, i32) -> i32> static_hook(x, y) for func {
-            static_hook(x * 2, y)
+            static_hook.call_real(x * 2, y)
         }
     }
 
@@ -125,9 +124,9 @@ fn test_static_hook_macro_panic() {
 
     static_hooks! {
         unsafe hook<fn(i32, i32) -> i32> static_hook(x, y) for func {
-            static_hook(x * 2, y)
+            static_hook.call_real(x * 2, y)
         }
     }
 
-    static_hook(10, 10);
+    static_hook.call_real(10, 10);
 }
