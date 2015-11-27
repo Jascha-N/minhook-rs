@@ -224,7 +224,7 @@ pub fn initialize() -> Result<()> {
 /// This function is very unsafe because any live hooks might still depend on this library. After
 /// calling this function existing trampoline functions might point to uninitialized memory.
 /// Only use this function when you are absolutely sure no hook objects will be accessed after
-/// its usage.
+/// its use.
 pub unsafe fn uninitialize() -> Result<()> {
     imp::uninitialize()
 }
@@ -293,7 +293,7 @@ pub trait Hook<T: Function> {
 
 
 
-/// A temporary hook that is destroyed when it goes out of scope.
+/// A hook that is destroyed when it goes out of scope.
 #[derive(Debug)]
 pub struct ScopedHook<T: Function> {
     target: Option<T>,
@@ -301,7 +301,7 @@ pub struct ScopedHook<T: Function> {
 }
 
 impl<T: Function> ScopedHook<T> {
-    /// Creates a new temporary hook given a target function and a detour function.
+    /// Creates a new `ScopedHook` given a target function and a detour function.
     ///
     /// # Unsafety
     ///
@@ -377,7 +377,7 @@ impl<T: Function> StaticHook<T> {
     ///
     /// # Unsafety
     ///
-    /// This method is unsafe since any trampoline function pointers will become dangling after destroying the hook.
+    /// This method is unsafe since any trampoline function pointers will become dangling afterwards.
     pub unsafe fn destroy(self) -> Result<()> {
         imp::remove_hook(self.target.as_ptr())
     }
@@ -652,11 +652,11 @@ pub trait Function {
     /// Converts this function into an untyped function pointer.
     fn as_ptr(&self) -> FnPointer;
 
-    /// Constructs a `Function` from a raw pointer.
+    /// Constructs a `Function` from an untyped function pointer.
     ///
     /// # Unsafety
     ///
-    /// This method is unsafe because the argument should point to proper executable memory.
+    /// This method is unsafe because the argument should point to proper executable memory of the correct type.
     unsafe fn from_ptr(ptr: FnPointer) -> Self;
 }
 
