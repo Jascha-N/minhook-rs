@@ -360,8 +360,8 @@ impl<T: Function> LocalHook<T> {
     /// Transforms this hook into a static hook, consuming this object.
     pub fn into_static(mut self) -> StaticHook<T> {
         StaticHook {
-            target: mem::replace(&mut self.target, None).unwrap(),
-            trampoline: mem::replace(&mut self.trampoline, None).unwrap(),
+            target: self.target.take().unwrap(),
+            trampoline: self.trampoline.take().unwrap(),
         }
     }
 
@@ -369,7 +369,7 @@ impl<T: Function> LocalHook<T> {
     ///
     /// This method returns whether it was succesful as opposed to `drop()`.
     pub fn destroy(mut self) -> Result<()> {
-        let target = mem::replace(&mut self.target, None).unwrap();
+        let target = self.target.take().unwrap();
 
         unsafe { imp::remove_hook(target.as_ptr()) }
     }
