@@ -295,12 +295,12 @@ pub trait Hook<T: Function> {
 
 /// A temporary hook that is destroyed when it goes out of scope.
 #[derive(Debug)]
-pub struct LocalHook<T: Function> {
+pub struct ScopedHook<T: Function> {
     target: Option<T>,
     trampoline: Option<T>
 }
 
-impl<T: Function> LocalHook<T> {
+impl<T: Function> ScopedHook<T> {
     /// Creates a new temporary hook given a target function and a detour function.
     ///
     /// # Unsafety
@@ -312,13 +312,13 @@ impl<T: Function> LocalHook<T> {
     /// Due to optimizations not every concrete implementation of a parameterized function has it's own
     /// code in the resulting binary. This can lead to situations where a hook is created for more than
     /// just the the target function and the function signature of the detour function does not match up.
-    pub unsafe fn new<D>(target: T, detour: D) -> Result<LocalHook<T>>
+    pub unsafe fn new<D>(target: T, detour: D) -> Result<ScopedHook<T>>
     where T: HookableWith<D>, D: Function {
         try!(initialize());
 
         let trampoline = T::from_ptr(try!(imp::create_hook(target.as_ptr(), detour.as_ptr())));
 
-        Ok(LocalHook {
+        Ok(ScopedHook {
             target: Some(target),
             trampoline: Some(trampoline),
         })
@@ -342,13 +342,13 @@ impl<T: Function> LocalHook<T> {
     }
 }
 
-impl<T: Function> Hook<T> for LocalHook<T> {
+impl<T: Function> Hook<T> for ScopedHook<T> {
     fn target(&self) -> &T {
         self.target.as_ref().unwrap()
     }
 }
 
-impl<T: Function> Drop for LocalHook<T> {
+impl<T: Function> Drop for ScopedHook<T> {
     fn drop(&mut self) {
         self.target.as_ref().map(|target| unsafe {
             let _ = imp::remove_hook(target.as_ptr());
@@ -389,9 +389,9 @@ impl<T: Function> Hook<T> for StaticHook<T> {
     }
 }
 
-impl<T: Function> From<LocalHook<T>> for StaticHook<T> {
-    fn from(local_hook: LocalHook<T>) -> Self {
-        local_hook.into_static()
+impl<T: Function> From<ScopedHook<T>> for StaticHook<T> {
+    fn from(scoped: ScopedHook<T>) -> Self {
+        scoped.into_static()
     }
 }
 
@@ -595,7 +595,7 @@ macro_rules! static_hooks {
                     use ::std::option::Option::{self, Some, None};
                     use ::std::result::Result::Ok;
 
-                    use $crate::{Result, LazyStaticHook, StaticHook, LocalHook};
+                    use $crate::{Result, LazyStaticHook, StaticHook, ScopedHook};
 
                     #[allow(dead_code)]
                     struct LazyStaticHookImpl;
@@ -608,8 +608,8 @@ macro_rules! static_hooks {
                             let mut result = Ok(());
 
                             INIT.call_once(|| unsafe {
-                                result = LocalHook::<$fun_type>::new($target as $fun_type, __detour as $fun_type)
-                                                                .map(|hook| HOOK = Some(hook.into_static()));
+                                result = ScopedHook::<$fun_type>::new($target as $fun_type, __detour as $fun_type)
+                                                                 .map(|hook| HOOK = Some(hook.into_static()));
                             });
 
                             result.map(|_| unsafe {
@@ -700,7 +700,7 @@ macro_rules! impl_hookable {
     };
 
     (impl_safe: ($($arg:ident),*) ($fun_type:ty)) => {
-        impl<Ret: 'static, $($arg: 'static),*> LocalHook<$fun_type> {
+        impl<Ret: 'static, $($arg: 'static),*> ScopedHook<$fun_type> {
             /// Call the original function.
             #[inline]
             #[allow(non_snake_case)]
@@ -722,7 +722,7 @@ macro_rules! impl_hookable {
     };
 
     (impl_unsafe: ($($arg:ident),*) ($fun_type:ty)) => {
-        impl<Ret: 'static, $($arg: 'static),*> LocalHook<$fun_type> {
+        impl<Ret: 'static, $($arg: 'static),*> ScopedHook<$fun_type> {
             /// Call the original function.
             #[inline]
             #[allow(non_snake_case)]
