@@ -3,7 +3,7 @@
 //! Rust wrapper around the [MinHook][minhook] library.
 //!
 //! [minhook]: http://www.codeproject.com/KB/winsdk/LibMinHook.aspx
-#![cfg_attr(feature = "nightly", feature(on_unimplemented, static_mutex))]
+#![cfg_attr(feature = "unstable", feature(on_unimplemented, static_mutex))]
 #![warn(missing_docs)]
 
 pub mod ffi;
@@ -237,7 +237,7 @@ where
     D: for<'a> IntoIterator<Item = &'a Hook>
 {
     // Requires a lock to prevent hooks queued from other threads to be applied as well.
-    #[cfg(not(feature = "nightly"))]
+    #[cfg(not(feature = "unstable"))]
     fn obtain_lock<'a>() -> MutexGuard<'a, ()> {
         use std::sync::Mutex;
 
@@ -250,7 +250,7 @@ where
         }
     }
 
-    #[cfg(feature = "nightly")]
+    #[cfg(feature = "unstable")]
     fn obtain_lock<'a>() -> MutexGuard<'a, ()> {
         use std::sync::{StaticMutex, MUTEX_INIT};
 
@@ -638,7 +638,7 @@ impl FnPointer {
 }
 
 /// Trait representing a function that can be used as a target function or detour function for hooking.
-#[cfg_attr(feature = "nightly", rustc_on_unimplemented = "The type `{Self}` is not an eligible target function or detour function.")]
+#[cfg_attr(feature = "unstable", rustc_on_unimplemented = "The type `{Self}` is not an eligible target function or detour function.")]
 pub trait Function {
     /// Converts this function into an untyped function pointer.
     fn as_ptr(&self) -> FnPointer;
@@ -657,7 +657,7 @@ pub trait Function {
 ///
 /// Implementing this trait requires proper understanding of the compatibility of the target and detour functions.
 /// Incompatible functions can cause all kinds of undefined behaviour.
-#[cfg_attr(feature = "nightly", rustc_on_unimplemented = "The type `{D}` is not a suitable detour function type for a target function of type `{Self}`.")]
+#[cfg_attr(feature = "unstable", rustc_on_unimplemented = "The type `{D}` is not a suitable detour function type for a target function of type `{Self}`.")]
 pub unsafe trait HookableWith<D: Function>: Function {}
 
 
