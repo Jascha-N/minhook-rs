@@ -3,13 +3,13 @@
 //! Rust wrapper around the [MinHook][minhook] library.
 //!
 //! [minhook]: http://www.codeproject.com/KB/winsdk/LibMinHook.aspx
-#![cfg_attr(feature = "nightly", feature(on_unimplemented))]
+#![cfg_attr(feature = "nightly", feature(on_unimplemented, static_mutex))]
 #![warn(missing_docs)]
 
 pub mod ffi;
 
 use std::{error, fmt, mem, ops, result};
-use std::sync::{ONCE_INIT, Once};
+use std::sync::{MutexGuard, Once, ONCE_INIT};
 use std::os::raw::c_void;
 
 use ffi::MH_STATUS;
@@ -52,33 +52,23 @@ mod imp {
     }
 
     #[inline]
-    pub unsafe fn enable_hook(target: FnPointer) -> Result<()> {
-        status_to_result(MH_EnableHook(target.as_raw_mut()))
+    pub unsafe fn set_enabled(target: FnPointer, enabled: bool) -> Result<()> {
+        let status = if enabled {
+            MH_EnableHook(target.as_raw_mut())
+        } else {
+            MH_DisableHook(target.as_raw_mut())
+        };
+        status_to_result(status)
     }
 
     #[inline]
-    pub unsafe fn disable_hook(target: FnPointer) -> Result<()> {
-        status_to_result(MH_DisableHook(target.as_raw_mut()))
-    }
-
-    #[inline]
-    pub unsafe fn queue_enable_hook(target: FnPointer) -> Result<()> {
-        status_to_result(MH_QueueEnableHook(target.as_raw_mut()))
-    }
-
-    #[inline]
-    pub unsafe fn queue_disable_hook(target: FnPointer) -> Result<()> {
-        status_to_result(MH_QueueDisableHook(target.as_raw_mut()))
-    }
-
-    #[inline]
-    pub unsafe fn queue_enable_hook_all() -> Result<()> {
-        status_to_result(MH_QueueEnableHook(MH_ALL_HOOKS))
-    }
-
-    #[inline]
-    pub unsafe fn queue_disable_hook_all() -> Result<()> {
-        status_to_result(MH_QueueDisableHook(MH_ALL_HOOKS))
+    pub unsafe fn queue_enabled(target: FnPointer, enabled: bool) -> Result<()> {
+        let status = if enabled {
+            MH_QueueEnableHook(target.as_raw_mut())
+        } else {
+            MH_QueueDisableHook(target.as_raw_mut())
+        };
+        status_to_result(status)
     }
 
     #[inline]
@@ -205,7 +195,7 @@ pub type Result<T> = result::Result<T, Error>;
 
 /// Initializes the minhook-rs library.
 ///
-/// It is not required to call this function directly as the other library functions will do it internally.
+/// It is not required to call this function excplicitly as the other library functions will do it internally.
 /// Calling this function again after a previous successful initialization is a no-op.
 pub fn initialize() -> Result<()> {
     static INIT: Once = ONCE_INIT;
@@ -229,65 +219,79 @@ pub unsafe fn uninitialize() -> Result<()> {
     imp::uninitialize()
 }
 
-/// Applies all queued hook changes at once.
-pub fn apply_queued_hooks() -> Result<()> {
-    try!(initialize());
+/// Applies a list of hook changes at once.
+///
+/// This function is more efficient than enabling/disabling hooks individually.
+pub fn apply_hooks<E, D>(enable: E, disable: D) -> Result<()>
+where
+    E: for<'a> IntoIterator<Item = &'a Hook>,
+    D: for<'a> IntoIterator<Item = &'a Hook>
+{
+    // Requires a lock to prevent hooks queued from other threads to be applied as well.
+    #[cfg(not(feature = "nightly"))]
+    fn obtain_lock<'a>() -> MutexGuard<'a, ()> {
+        use std::sync::Mutex;
 
-    unsafe { imp::apply_queued() }
-}
+        static mut LOCK: *const Mutex<()> = 0 as *const _;
+        static     INIT: Once             = ONCE_INIT;
 
-/// Enables all hooks at once.
-pub fn enable_all_hooks() -> Result<()> {
+        unsafe {
+            INIT.call_once(|| LOCK = Box::into_raw(Box::new(Mutex::new(()))));
+            (*LOCK).lock().unwrap()
+        }
+    }
+
+    #[cfg(feature = "nightly")]
+    fn obtain_lock<'a>() -> MutexGuard<'a, ()> {
+        use std::sync::{StaticMutex, MUTEX_INIT};
+
+        static LOCK: StaticMutex = MUTEX_INIT;
+
+        LOCK.lock().unwrap()
+    }
+
+
+
     try!(initialize());
 
     unsafe {
-        try!(imp::queue_enable_hook_all());
+        let _g = obtain_lock();
+
+        for hook in enable {
+            try!(imp::queue_enabled(hook.target_ptr(), true));
+        }
+        for hook in disable {
+            try!(imp::queue_enabled(hook.target_ptr(), false));
+        }
         imp::apply_queued()
     }
 }
 
-/// Disables all hooks at once.
-pub fn disable_all_hooks() -> Result<()> {
+/// Applies a list of hook changes at once.
+///
+/// This function is more efficient than enabling/disabling hooks individually.
+pub fn install_static_hooks<I>(hooks: I) -> Result<()>
+where I: for<'h> IntoIterator<Item = &'h LazyStaticHookInit> {
     try!(initialize());
 
-    unsafe {
-        try!(imp::queue_disable_hook_all());
-        imp::apply_queued()
+    for hook in hooks {
+        try!(hook.install());
     }
+    Ok(())
 }
 
 
 
 /// Base trait for hooks.
-pub trait Hook<T: Function> {
-    /// Returns a reference to the hook target function.
-    fn target(&self) -> &T;
+pub trait Hook {
+    /// Returns the target function pointer.
+    fn target_ptr(&self) -> FnPointer;
 
     /// Enables or disables this hook.
     ///
-    /// Consider using `queue_enabled()` with `apply_queued_hooks()` or `apply_hooks!` if you
-    /// want to enable/disable a large amount of hooks at once.
+    /// Consider using `apply_hooks()` if you want to enable/disable a large amount of hooks at once.
     fn set_enabled(&self, enabled: bool) -> Result<()> {
-        unsafe {
-            if enabled {
-                imp::enable_hook(self.target().as_ptr())
-            } else {
-                imp::disable_hook(self.target().as_ptr())
-            }
-        }
-    }
-
-    /// Queues this hook for enabling or disabling.
-    ///
-    /// Use `apply_queued_hooks()` to apply the queued hooks.
-    fn queue_enabled(&self, enabled: bool) -> Result<()> {
-        unsafe {
-            if enabled {
-                imp::queue_enable_hook(self.target().as_ptr())
-            } else {
-                imp::queue_disable_hook(self.target().as_ptr())
-            }
-        }
+        unsafe { imp::set_enabled(self.target_ptr(), enabled) }
     }
 }
 
@@ -303,7 +307,7 @@ pub struct ScopedHook<T: Function> {
 impl<T: Function> ScopedHook<T> {
     /// Install a new `ScopedHook` given a target function and a detour function.
     ///
-    /// The hook is disabled by default. Call `set_enabled(true)` to enable it.
+    /// The hook is disabled by default.
     ///
     /// # Unsafety
     ///
@@ -334,7 +338,7 @@ impl<T: Function> ScopedHook<T> {
         }
     }
 
-    /// Safely uninstalls and destroys this hook.
+    /// Uninstalls and destroys this hook.
     ///
     /// This method returns whether it was succesful as opposed to `drop()`.
     pub fn destroy(mut self) -> Result<()> {
@@ -344,9 +348,9 @@ impl<T: Function> ScopedHook<T> {
     }
 }
 
-impl<T: Function> Hook<T> for ScopedHook<T> {
-    fn target(&self) -> &T {
-        self.target.as_ref().unwrap()
+impl<T: Function> Hook for ScopedHook<T> {
+    fn target_ptr(&self) -> FnPointer {
+        self.target.as_ref().unwrap().as_ptr()
     }
 }
 
@@ -385,9 +389,9 @@ impl<T: Function> StaticHook<T> {
     }
 }
 
-impl<T: Function> Hook<T> for StaticHook<T> {
-    fn target(&self) -> &T {
-        &self.target
+impl<T: Function> Hook for StaticHook<T> {
+    fn target_ptr(&self) -> FnPointer {
+        self.target.as_ptr()
     }
 }
 
@@ -399,6 +403,14 @@ impl<T: Function> From<ScopedHook<T>> for StaticHook<T> {
 
 
 
+/// See [LazyStaticHook](trait.LazyStaticHook.html).
+pub trait LazyStaticHookInit {
+    /// Initialize and install the underlying hook.
+    ///
+    /// Calling this method again after a previous successful initialization is a no-op.
+    fn install(&self) -> Result<()>;
+}
+
 /// A thread-safe initializer type for a lazily initialized `StaticHook`.
 ///
 /// This type is implemented by the static variables created with the `static_hooks!` macro.
@@ -407,57 +419,25 @@ impl<T: Function> From<ScopedHook<T>> for StaticHook<T> {
 /// for this is that `install()` will return an error when
 /// hook installation fails, while dereferencing will panic.
 pub trait LazyStaticHook<T: Function>: Sync {
-    /// Initialize and install the underlying hook and return a reference to it.
-    ///
-    /// Calling this method again after a previous successful initialization is a no-op.
-    fn install(&self) -> Result<&StaticHook<T>>;
+    #[doc(hidden)]
+    fn __get(&self) -> Result<&StaticHook<T>>;
+}
+
+impl<T: Function> LazyStaticHookInit for LazyStaticHook<T> {
+    fn install(&self) -> Result<()> {
+        self.__get().map(|_|())
+    }
 }
 
 impl<T: Function> ops::Deref for LazyStaticHook<T> {
     type Target = StaticHook<T>;
 
     fn deref(&self) -> &Self::Target {
-        self.install().expect("Lazy hook installation panicked")
+        self.__get().expect("Lazy hook installation panicked")
     }
 }
 
 
-
-/// Initializes a list of static hooks.
-#[macro_export]
-macro_rules! install_lazy_static_hooks {
-    ($head:path) => {
-        $head.install()
-    };
-
-    ($head:path, $($tail:path),*) => {
-        $head.install().and_then(|_| install_lazy_static_hooks!($($tail),*))
-    };
-}
-
-/// Enables or disables a list of hooks all at once.
-///
-/// Hooks prefixed with `-` are disabled instead of enabled.
-#[macro_export]
-macro_rules! apply_hooks {
-    () => {
-        $crate::apply_queued_hooks()
-    };
-
-    ($head:path) => {
-        $head.queue_enabled(true).and_then(|_| apply_hooks!())
-    };
-    (-$head:path) => {
-        $head.queue_enabled(false).and_then(|_| apply_hooks!())
-    };
-
-    ($head:path, $($tail:tt)*) => {
-        $head.queue_enabled(true).and_then(|_| apply_hooks!($($tail)*))
-    };
-    (-$head:path, $($tail:tt)*) => {
-        $head.queue_enabled(false).and_then(|_| apply_hooks!($($tail)*))
-    };
-}
 
 /// Declares one or more lazily initialized thread-safe static hooks.
 ///
@@ -603,7 +583,7 @@ macro_rules! static_hooks {
                     struct LazyStaticHookImpl;
 
                     impl LazyStaticHook<$fun_type> for LazyStaticHookImpl {
-                        fn install(&self) -> Result<&StaticHook<$fun_type>> {
+                        fn __get(&self) -> Result<&StaticHook<$fun_type>> {
                             static     INIT: Once                          = ONCE_INIT;
                             static mut HOOK: Option<StaticHook<$fun_type>> = None;
 
