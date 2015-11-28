@@ -16,6 +16,15 @@ use ffi::MH_STATUS;
 
 
 
+/// The minhook-rs prelude.
+///
+/// Glob import this prelude to bring commonly used traits into scope.
+pub mod prelude {
+    pub use super::{Hook, LazyStaticHook, LazyStaticHookInit};
+}
+
+
+
 mod imp {
     use std::mem;
     use std::os::raw::c_void;

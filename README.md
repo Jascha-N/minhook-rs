@@ -44,7 +44,7 @@ extern crate winapi;
 extern crate user32;
 
 use std::ptr;
-use minhook::Hook;
+use minhook::prelude::*;
 
 mod hooks {
     use winapi::{HWND, LPCSTR, UINT, c_int};
