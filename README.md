@@ -44,6 +44,7 @@ extern crate winapi;
 extern crate user32;
 
 use std::ptr;
+use std::ffi::CString;
 use minhook::prelude::*;
 
 mod hooks {
@@ -63,23 +64,16 @@ fn main() {
 	// Install the hook
     hooks::MessageBoxA.install().unwrap();
 
+    let hello = CString::new(&b"Hello"[..]).unwrap();
+    let world = CString::new(&b"World"[..]).unwrap();
+
     // Call the function
-    unsafe {
-        user32::MessageBoxA(ptr::null_mut(),
-                            b"Hello\0".as_ptr() as *const _,
-                            b"World\0".as_ptr() as *const _,
-                            winapi::MB_OK);
-    }
+    unsafe { user32::MessageBoxA(ptr::null_mut(), hello.as_ptr(), world.as_ptr(), winapi::MB_OK); }
 
     // Enable the hook
     hooks::MessageBoxA.set_enabled(true).unwrap();
 
     // Call the - now hooked - function
-    unsafe {
-        user32::MessageBoxA(ptr::null_mut(),
-                            b"Hello\0".as_ptr() as *const _,
-                            b"World\0".as_ptr() as *const _,
-                            winapi::MB_OK);
-    }
+    unsafe { user32::MessageBoxA(ptr::null_mut(), hello.as_ptr(), world.as_ptr(), winapi::MB_OK); }
 }
 ```
