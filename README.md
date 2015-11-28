@@ -17,7 +17,7 @@ First, add the following lines to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-minhook-rs = { git = "https://github.com/Jascha-N/minhook-rs" }
+minhook = { git = "https://github.com/Jascha-N/minhook-rs" }
 ```
 
 Next, add this to your crate root:
