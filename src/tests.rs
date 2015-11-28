@@ -99,7 +99,7 @@ fn test_static_hook_macro() {
     }
 
     assert_eq!(func(2, 5), 7);
-    static_hook.initialize().unwrap();
+    static_hook.install().unwrap();
 
     assert_eq!(func(2, 5), 7);
     static_hook.set_enabled(true).unwrap();

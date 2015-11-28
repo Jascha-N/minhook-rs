@@ -334,7 +334,7 @@ impl<T: Function> ScopedHook<T> {
         }
     }
 
-    /// Safely destroys this hook.
+    /// Safely uninstalls and destroys this hook.
     ///
     /// This method returns whether it was succesful as opposed to `drop()`.
     pub fn destroy(mut self) -> Result<()> {
@@ -379,7 +379,7 @@ impl<T: Function> StaticHook<T> {
     ///
     /// # Unsafety
     ///
-    /// This method is unsafe since any trampoline function pointers will become dangling afterwards.
+    /// This method is unsafe since any trampoline function pointers will become dangling.
     pub unsafe fn destroy(self) -> Result<()> {
         imp::remove_hook(self.target.as_ptr())
     }
@@ -402,22 +402,22 @@ impl<T: Function> From<ScopedHook<T>> for StaticHook<T> {
 /// A thread-safe initializer type for a lazily initialized `StaticHook`.
 ///
 /// This type is implemented by the static variables created with the `static_hooks!` macro.
-/// It is strongly recommended to call `initialize()` before accessing
+/// It is strongly recommended to call `install()` before accessing
 /// the underlying `StaticHook` through derefencing. The reason
-/// for this is that `initialize()` will return a wrapped `Error` when
-/// initialization fails, while dereferencing will panic.
+/// for this is that `install()` will return an error when
+/// hook installation fails, while dereferencing will panic.
 pub trait LazyStaticHook<T: Function>: Sync {
     /// Initialize and install the underlying hook and return a reference to it.
     ///
     /// Calling this method again after a previous successful initialization is a no-op.
-    fn initialize(&self) -> Result<&StaticHook<T>>;
+    fn install(&self) -> Result<&StaticHook<T>>;
 }
 
 impl<T: Function> ops::Deref for LazyStaticHook<T> {
     type Target = StaticHook<T>;
 
     fn deref(&self) -> &Self::Target {
-        self.initialize().expect("Static hook creation panicked")
+        self.install().expect("Lazy hook installation panicked")
     }
 }
 
@@ -425,13 +425,13 @@ impl<T: Function> ops::Deref for LazyStaticHook<T> {
 
 /// Initializes a list of static hooks.
 #[macro_export]
-macro_rules! init_static_hooks {
+macro_rules! install_lazy_static_hooks {
     ($head:path) => {
-        $head.initialize()
+        $head.install()
     };
 
     ($head:path, $($tail:path),*) => {
-        $head.initialize().and_then(|_| init_static_hooks!($($tail),*))
+        $head.install().and_then(|_| install_lazy_static_hooks!($($tail),*))
     };
 }
 
@@ -603,7 +603,7 @@ macro_rules! static_hooks {
                     struct LazyStaticHookImpl;
 
                     impl LazyStaticHook<$fun_type> for LazyStaticHookImpl {
-                        fn initialize(&self) -> Result<&StaticHook<$fun_type>> {
+                        fn install(&self) -> Result<&StaticHook<$fun_type>> {
                             static     INIT: Once                          = ONCE_INIT;
                             static mut HOOK: Option<StaticHook<$fun_type>> = None;
 
