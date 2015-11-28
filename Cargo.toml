@@ -1,5 +1,5 @@
 [package]
-name = "minhook-rs"
+name = "minhook"
 description = "A function hooking library for the Rust programming language"
 version = "0.1.0"
 authors = ["Jascha Neutelings"]
@@ -13,8 +13,5 @@ build = "build.rs"
 winapi = { version = "0.2.5", optional = true }
 
 [features]
-nightly = []
+unstable = []
 increased_arity = []
-
-[lib]
-name = "minhook"
