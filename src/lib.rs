@@ -184,10 +184,11 @@ impl HookQueue {
             let _g = obtain_lock();
 
             for (target, enabled) in self.0 {
+                // Any failure at this point is a bug.
                 if enabled {
-                    try!(imp::queue_enable_hook(target));
+                    imp::queue_enable_hook(target).unwrap();
                 } else {
-                    try!(imp::queue_disable_hook(target));
+                    imp::queue_disable_hook(target).unwrap();
                 }
             }
             imp::apply_queued()
