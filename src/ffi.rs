@@ -7,6 +7,8 @@
 #[cfg(feature = "winapi")]
 extern crate winapi;
 
+pub use self::winapi::{LPCSTR, LPCWSTR, LPVOID};
+
 #[cfg(not(feature = "winapi"))]
 mod winapi {
     /// A pointer to a constant null-terminated string of 8-bit Windows (ANSI) characters.
@@ -19,12 +21,10 @@ mod winapi {
     pub type LPVOID = *mut ::std::os::raw::c_void;
 }
 
-pub use self::winapi::{LPCSTR, LPCWSTR, LPVOID};
-
 /// MinHook Error Codes.
-#[derive(Debug, Copy, Clone)]
-#[repr(C)]
 #[must_use]
+#[repr(C)]
+#[derive(Copy, PartialEq, Eq, Clone, Debug)]
 pub enum MH_STATUS {
     /// Unknown error. Should not be returned.
     MH_UNKNOWN = -1,
