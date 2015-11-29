@@ -15,7 +15,7 @@ fn test_scoped_hook() {
     let hook = unsafe {
         ScopedHook::install(func as fn(i32, i32) -> i32,
                             func_detour as fn(i32, i32) -> i32)
-            .unwrap()
+                   .unwrap()
     };
 
     assert_eq!(func(2, 5), 7);
@@ -46,7 +46,7 @@ fn test_static_hook_locally() {
     let hook = unsafe {
         ScopedHook::install(func as fn(i32, i32) -> i32,
                             func_detour as fn(i32, i32) -> i32)
-            .unwrap()
+                   .unwrap()
     };
 
     assert_eq!(func(2, 5), 7);
@@ -74,7 +74,7 @@ fn test_static_hook_statically() {
     let hook = unsafe {
         ScopedHook::install(func as fn(i32, i32) -> i32,
                             func_detour as fn(i32, i32) -> i32)
-            .unwrap()
+                   .unwrap()
     };
 
     static mut HOOK: Option<StaticHook<fn(i32, i32) -> i32>> = None;
@@ -129,4 +129,50 @@ fn test_static_hook_macro_panic() {
     }
 
     static_hook.call_real(10, 10);
+}
+
+#[test]
+fn test_hook_queue() {
+    fn func1() -> &'static str {
+        "foo"
+    }
+    fn detour1() -> &'static str {
+        "bar"
+    }
+
+    fn func2() -> i32 {
+        7
+    }
+    fn detour2() -> i32 {
+        42
+    }
+
+    fn func3(x: i32) -> Option<i32> {
+        Some(x)
+    }
+    fn detour3(_x: i32) -> Option<i32> {
+        None
+    }
+
+    let (hook1, hook2, hook3) = unsafe {
+        (ScopedHook::install(func1 as fn() -> &'static str,
+                             detour1 as fn() -> &'static str)
+                    .unwrap(),
+         ScopedHook::install(func2 as fn() -> i32,
+                             detour2 as fn() -> i32)
+                    .unwrap(),
+         ScopedHook::install(func3 as fn(i32) -> Option<i32>,
+                             detour3 as fn(i32) -> Option<i32>)
+                    .unwrap())
+    };
+
+    hook2.enable().unwrap();
+
+    let mut queue = HookQueue::new();
+    queue.enable(&hook1).disable(&hook2).enable(&hook3).disable(&hook3);
+    queue.apply().unwrap();
+
+    assert_eq!(func1(), "bar");
+    assert_eq!(func2(), 7);
+    assert_eq!(func3(11), Some(11));
 }
