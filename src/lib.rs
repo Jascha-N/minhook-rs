@@ -43,7 +43,7 @@ mod imp {
         let mut trampoline: *mut c_void = mem::uninitialized();
 
         status_to_result(MH_CreateHook(target, detour, &mut trampoline))
-            .map(|_| FnPointer(mem::transmute(trampoline)))
+            .map(|_| FnPointer(trampoline))
     }
 
     #[inline]
