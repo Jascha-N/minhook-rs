@@ -119,7 +119,7 @@ fn test_static_hook_macro_panic() {
     let _hook = unsafe {
         ScopedHook::install(func as fn(i32, i32) -> i32,
                             func_detour as fn(i32, i32) -> i32)
-            .unwrap()
+                   .unwrap()
     };
 
     static_hooks! {
