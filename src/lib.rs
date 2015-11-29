@@ -122,54 +122,6 @@ pub unsafe fn uninitialize() -> Result<()> {
 /// Applies a list of hook changes at once.
 ///
 /// This function is more efficient than enabling/disabling hooks individually.
-pub fn apply_hooks<E, D>(enable: E, disable: D) -> Result<()>
-where
-    E: for<'a> IntoIterator<Item = &'a Hook>,
-    D: for<'a> IntoIterator<Item = &'a Hook>
-{
-    // Requires a lock to prevent hooks queued from other threads to be applied as well.
-    #[cfg(not(feature = "unstable"))]
-    fn obtain_lock<'a>() -> MutexGuard<'a, ()> {
-        use std::sync::Mutex;
-
-        static mut LOCK: *const Mutex<()> = 0 as *const _;
-        static     INIT: Once             = ONCE_INIT;
-
-        unsafe {
-            INIT.call_once(|| LOCK = Box::into_raw(Box::new(Mutex::new(()))));
-            (*LOCK).lock().unwrap()
-        }
-    }
-
-    #[cfg(feature = "unstable")]
-    fn obtain_lock<'a>() -> MutexGuard<'a, ()> {
-        use std::sync::{StaticMutex, MUTEX_INIT};
-
-        static LOCK: StaticMutex = MUTEX_INIT;
-
-        LOCK.lock().unwrap()
-    }
-
-
-
-    try!(initialize());
-
-    unsafe {
-        let _g = obtain_lock();
-
-        for hook in enable {
-            try!(imp::queue_enabled(hook.target_ptr(), true));
-        }
-        for hook in disable {
-            try!(imp::queue_enabled(hook.target_ptr(), false));
-        }
-        imp::apply_queued()
-    }
-}
-
-/// Applies a list of hook changes at once.
-///
-/// This function is more efficient than enabling/disabling hooks individually.
 pub fn install_static_hooks<I>(hooks: I) -> Result<()>
 where I: for<'h> IntoIterator<Item = &'h LazyStaticHookInit> {
     try!(initialize());
@@ -178,6 +130,65 @@ where I: for<'h> IntoIterator<Item = &'h LazyStaticHookInit> {
         try!(hook.install());
     }
     Ok(())
+}
+
+/// A queue of hook changes to be applied at once.
+pub struct HookQueue(Vec<(FnPointer, bool)>);
+
+impl HookQueue {
+    /// Create a new empty queue.
+    pub fn new() -> HookQueue {
+        HookQueue(Vec::new())
+    }
+
+    /// Queue the given hook to be enabled.
+    pub fn enable(&mut self, hook: &Hook) -> &mut HookQueue {
+        self.0.push((hook.target_ptr(), true));
+        self
+    }
+
+    /// Queue the given hook to be disabled.
+    pub fn disable(&mut self, hook: &Hook) -> &mut HookQueue {
+        self.0.push((hook.target_ptr(), false));
+        self
+    }
+
+    /// Applies all the changes at once and consumes this queue.
+    pub fn apply(self) -> Result<()> {
+        // Requires a lock to prevent hooks queued from other threads to be applied as well.
+        #[cfg(not(feature = "unstable"))]
+        fn obtain_lock() -> MutexGuard<'static, ()> {
+            use std::sync::Mutex;
+
+            static mut LOCK: *const Mutex<()> = 0 as *const _;
+            static     INIT: Once             = ONCE_INIT;
+
+            unsafe {
+                INIT.call_once(|| LOCK = Box::into_raw(Box::new(Mutex::new(()))));
+                (*LOCK).lock().unwrap()
+            }
+        }
+
+        #[cfg(feature = "unstable")]
+        fn obtain_lock() -> MutexGuard<'static, ()> {
+            use std::sync::{StaticMutex, MUTEX_INIT};
+
+            static LOCK: StaticMutex = MUTEX_INIT;
+
+            LOCK.lock().unwrap()
+        }
+
+        try!(initialize());
+
+        unsafe {
+            let _g = obtain_lock();
+
+            for (target, enabled) in self.0 {
+                try!(imp::queue_enabled(target, enabled));
+            }
+            imp::apply_queued()
+        }
+    }
 }
 
 
@@ -189,7 +200,7 @@ pub trait Hook {
 
     /// Enables or disables this hook.
     ///
-    /// Consider using `apply_hooks()` if you want to enable/disable a large amount of hooks at once.
+    /// Consider using a `HookQueue` if you want to enable/disable a large amount of hooks at once.
     fn set_enabled(&self, enabled: bool) -> Result<()> {
         unsafe { imp::set_enabled(self.target_ptr(), enabled) }
     }
