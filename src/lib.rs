@@ -39,36 +39,36 @@ mod imp {
     }
 
     #[inline]
-    pub unsafe fn create_hook(target: FnPointer, detour: FnPointer) -> Result<FnPointer> {
+    pub unsafe fn create_hook(FnPointer(target): FnPointer, FnPointer(detour): FnPointer) -> Result<FnPointer> {
         let mut trampoline: *mut c_void = mem::uninitialized();
 
-        status_to_result(MH_CreateHook(target.as_raw_mut(), detour.as_raw_mut(), &mut trampoline as *mut _))
-            .map(|_| FnPointer::from_raw(trampoline))
+        status_to_result(MH_CreateHook(target, detour, &mut trampoline))
+            .map(|_| FnPointer(mem::transmute(trampoline)))
     }
 
     #[inline]
-    pub unsafe fn remove_hook(target: FnPointer) -> Result<()> {
-        status_to_result(MH_RemoveHook(target.as_raw_mut()))
+    pub unsafe fn remove_hook(FnPointer(target): FnPointer) -> Result<()> {
+        status_to_result(MH_RemoveHook(target))
     }
 
     #[inline]
-    pub unsafe fn enable_hook(target: FnPointer) -> Result<()> {
-        status_to_result(MH_EnableHook(target.as_raw_mut()))
+    pub unsafe fn enable_hook(FnPointer(target): FnPointer) -> Result<()> {
+        status_to_result(MH_EnableHook(target))
     }
 
     #[inline]
-    pub unsafe fn disable_hook(target: FnPointer) -> Result<()> {
-        status_to_result(MH_DisableHook(target.as_raw_mut()))
+    pub unsafe fn disable_hook(FnPointer(target): FnPointer) -> Result<()> {
+        status_to_result(MH_DisableHook(target))
     }
 
     #[inline]
-    pub unsafe fn queue_enable_hook(target: FnPointer) -> Result<()> {
-        status_to_result(MH_QueueEnableHook(target.as_raw_mut()))
+    pub unsafe fn queue_enable_hook(FnPointer(target): FnPointer) -> Result<()> {
+        status_to_result(MH_QueueEnableHook(target))
     }
 
     #[inline]
-    pub unsafe fn queue_disable_hook(target: FnPointer) -> Result<()> {
-        status_to_result(MH_QueueDisableHook(target.as_raw_mut()))
+    pub unsafe fn queue_disable_hook(FnPointer(target): FnPointer) -> Result<()> {
+        status_to_result(MH_QueueDisableHook(target))
     }
 
     #[inline]
@@ -532,24 +532,7 @@ macro_rules! static_hooks {
 
 
 /// An untyped function pointer.
-pub struct FnPointer(*const c_void);
-
-impl FnPointer {
-    #[inline(always)]
-    fn from_raw(ptr: *const c_void) -> FnPointer {
-        FnPointer(ptr)
-    }
-
-    #[inline(always)]
-    fn as_raw(&self) -> *const c_void {
-        self.0
-    }
-
-    #[inline(always)]
-    fn as_raw_mut(&self) -> *mut c_void {
-        self.0 as *mut _
-    }
-}
+pub struct FnPointer(*mut c_void);
 
 /// Trait representing a function that can be used as a target function or detour function for hooking.
 #[cfg_attr(feature = "unstable", rustc_on_unimplemented = "The type `{Self}` is not an eligible target function or detour function.")]
@@ -656,8 +639,8 @@ macro_rules! impl_hookable {
             }
 
             #[inline(always)]
-            unsafe fn from_ptr(ptr: FnPointer) -> Self {
-                mem::transmute(ptr.as_raw())
+            unsafe fn from_ptr(FnPointer(ptr): FnPointer) -> Self {
+                mem::transmute(ptr)
             }
         }
 
