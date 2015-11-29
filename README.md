@@ -71,7 +71,7 @@ fn main() {
     unsafe { user32::MessageBoxA(ptr::null_mut(), hello.as_ptr(), world.as_ptr(), winapi::MB_OK); }
 
     // Enable the hook
-    hooks::MessageBoxA.set_enabled(true).unwrap();
+    hooks::MessageBoxA.enable().unwrap();
 
     // Call the - now hooked - function
     unsafe { user32::MessageBoxA(ptr::null_mut(), hello.as_ptr(), world.as_ptr(), winapi::MB_OK); }

@@ -52,23 +52,23 @@ mod imp {
     }
 
     #[inline]
-    pub unsafe fn set_enabled(target: FnPointer, enabled: bool) -> Result<()> {
-        let status = if enabled {
-            MH_EnableHook(target.as_raw_mut())
-        } else {
-            MH_DisableHook(target.as_raw_mut())
-        };
-        status_to_result(status)
+    pub unsafe fn enable_hook(target: FnPointer) -> Result<()> {
+        status_to_result(MH_EnableHook(target.as_raw_mut()))
     }
 
     #[inline]
-    pub unsafe fn queue_enabled(target: FnPointer, enabled: bool) -> Result<()> {
-        let status = if enabled {
-            MH_QueueEnableHook(target.as_raw_mut())
-        } else {
-            MH_QueueDisableHook(target.as_raw_mut())
-        };
-        status_to_result(status)
+    pub unsafe fn disable_hook(target: FnPointer) -> Result<()> {
+        status_to_result(MH_DisableHook(target.as_raw_mut()))
+    }
+
+    #[inline]
+    pub unsafe fn queue_enable_hook(target: FnPointer) -> Result<()> {
+        status_to_result(MH_QueueEnableHook(target.as_raw_mut()))
+    }
+
+    #[inline]
+    pub unsafe fn queue_disable_hook(target: FnPointer) -> Result<()> {
+        status_to_result(MH_QueueDisableHook(target.as_raw_mut()))
     }
 
     #[inline]
@@ -184,7 +184,11 @@ impl HookQueue {
             let _g = obtain_lock();
 
             for (target, enabled) in self.0 {
-                try!(imp::queue_enabled(target, enabled));
+                if enabled {
+                    try!(imp::queue_enable_hook(target));
+                } else {
+                    try!(imp::queue_disable_hook(target));
+                }
             }
             imp::apply_queued()
         }
@@ -198,11 +202,18 @@ pub trait Hook {
     /// Returns the target function pointer.
     fn target_ptr(&self) -> FnPointer;
 
-    /// Enables or disables this hook.
+    /// Enables this hook.
     ///
     /// Consider using a `HookQueue` if you want to enable/disable a large amount of hooks at once.
-    fn set_enabled(&self, enabled: bool) -> Result<()> {
-        unsafe { imp::set_enabled(self.target_ptr(), enabled) }
+    fn enable(&self) -> Result<()> {
+        unsafe { imp::enable_hook(self.target_ptr()) }
+    }
+
+    /// Disables this hook.
+    ///
+    /// Consider using a `HookQueue` if you want to enable/disable a large amount of hooks at once.
+    fn disable(&self) -> Result<()> {
+        unsafe { imp::disable_hook(self.target_ptr()) }
     }
 }
 

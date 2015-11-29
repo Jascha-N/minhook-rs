@@ -21,14 +21,14 @@ fn test_scoped_hook() {
     assert_eq!(func(2, 5), 7);
     assert_eq!(hook.call_real(2, 5), 7);
 
-    hook.set_enabled(true).unwrap();
+    hook.enable().unwrap();
     assert_eq!(func(2, 5), 10);
     assert_eq!(hook.call_real(2, 5), 7);
 
-    hook.set_enabled(false).unwrap();
+    hook.disable().unwrap();
     assert_eq!(func(2, 5), 7);
 
-    hook.set_enabled(true).unwrap();
+    hook.enable().unwrap();
     assert_eq!(func(2, 5), 10);
 
     hook.destroy().unwrap();
@@ -55,7 +55,7 @@ fn test_static_hook_locally() {
     assert_eq!(func(2, 5), 7);
     assert_eq!(static_hook.call_real(2, 5), 7);
 
-    static_hook.set_enabled(true).unwrap();
+    static_hook.enable().unwrap();
     assert_eq!(func(2, 5), 10);
     assert_eq!(static_hook.call_real(2, 5), 7);
     assert_eq!(static_hook.trampoline()(2, 5), 7);
@@ -81,7 +81,7 @@ fn test_static_hook_statically() {
     unsafe {
         HOOK = Some(hook.into_static());
         assert_eq!(func(2, 5), 7);
-        HOOK.as_ref().unwrap().set_enabled(true).unwrap();
+        HOOK.as_ref().unwrap().enable().unwrap();
         assert_eq!(func(2, 5), 10);
     }
 }
@@ -102,7 +102,7 @@ fn test_static_hook_macro() {
     static_hook.install().unwrap();
 
     assert_eq!(func(2, 5), 7);
-    static_hook.set_enabled(true).unwrap();
+    static_hook.enable().unwrap();
 
     assert_eq!(func(2, 5), 9);
 }
