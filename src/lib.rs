@@ -119,18 +119,7 @@ pub unsafe fn uninitialize() -> Result<()> {
     imp::uninitialize()
 }
 
-/// Applies a list of hook changes at once.
-///
-/// This function is more efficient than enabling/disabling hooks individually.
-pub fn install_static_hooks<I>(hooks: I) -> Result<()>
-where I: for<'h> IntoIterator<Item = &'h LazyStaticHookInit> {
-    try!(initialize());
 
-    for hook in hooks {
-        try!(hook.install());
-    }
-    Ok(())
-}
 
 /// A queue of hook changes to be applied at once.
 pub struct HookQueue(Vec<(FnPointer, bool)>);
