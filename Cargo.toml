@@ -9,8 +9,13 @@ readme = "README.md"
 links = "MinHook"
 build = "build.rs"
 
-[dependencies]
-winapi = { version = "0.2.5", optional = true }
+[dependencies.winapi]
+version = "0.2.5"
+optional = true
+
+[dependencies.clippy]
+version = "*"
+optional = true
 
 [features]
 unstable = []
