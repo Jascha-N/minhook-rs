@@ -14,7 +14,7 @@ version = "0.2.5"
 optional = true
 
 [dependencies.clippy]
-version = "*"
+git = "https://github.com/Manishearth/rust-clippy"
 optional = true
 
 [features]
