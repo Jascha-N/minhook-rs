@@ -6,7 +6,7 @@
 #![cfg_attr(feature = "unstable", feature(on_unimplemented, static_mutex))]
 #![warn(missing_docs)]
 
-use std::{mem, ops, result};
+use std::{mem, ops, result};f
 use std::sync::{MutexGuard, Once, ONCE_INIT};
 use std::os::raw::c_void;
 
@@ -622,12 +622,12 @@ macro_rules! impl_hookable {
 
     (impl_fun: ($($arg:ident),*) ($fun_type:ty)) => {
         impl<Ret: 'static, $($arg: 'static),*> Function for $fun_type {
-            #[inline(always)]
+            #[inline]
             fn as_ptr(&self) -> FnPointer {
                 FnPointer(*self as *mut _)
             }
 
-            #[inline(always)]
+            #[inline]
             unsafe fn from_ptr(FnPointer(ptr): FnPointer) -> Self {
                 mem::transmute(ptr)
             }
