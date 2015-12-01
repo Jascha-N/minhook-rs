@@ -6,7 +6,7 @@
 #![cfg_attr(feature = "unstable", feature(on_unimplemented, static_mutex))]
 #![warn(missing_docs)]
 
-use std::{mem, ops, result};f
+use std::{mem, ops, result};
 use std::sync::{MutexGuard, Once, ONCE_INIT};
 use std::os::raw::c_void;
 
