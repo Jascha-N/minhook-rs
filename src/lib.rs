@@ -6,7 +6,7 @@
 #![cfg_attr(feature = "unstable", feature(on_unimplemented, static_mutex))]
 #![warn(missing_docs)]
 
-use std::{mem, ops, result};
+use std::{mem, ops, result, fmt};
 use std::sync::{MutexGuard, Once, ONCE_INIT};
 use std::os::raw::c_void;
 
@@ -521,7 +521,14 @@ macro_rules! static_hooks {
 
 
 /// An untyped function pointer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FnPointer(*mut c_void);
+
+impl fmt::Pointer for FnPointer {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        write!(fmt, "{:p}", self.0)
+    }
+}
 
 /// Trait representing a function that can be used as a target function or detour function for hooking.
 #[cfg_attr(feature = "unstable", rustc_on_unimplemented = "The type `{Self}` is not an eligible target function or detour function.")]

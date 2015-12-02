@@ -24,7 +24,7 @@ mod winapi {
 /// MinHook Error Codes.
 #[must_use]
 #[repr(C)]
-#[derive(Copy, PartialEq, Eq, Clone, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MH_STATUS {
     /// Unknown error. Should not be returned.
     MH_UNKNOWN = -1,
