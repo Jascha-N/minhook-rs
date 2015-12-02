@@ -131,13 +131,13 @@ impl HookQueue {
     }
 
     /// Queue the given hook to be enabled.
-    pub fn enable(&mut self, hook: &Hook) -> &mut HookQueue {
+    pub fn enable(mut self, hook: &Hook) -> HookQueue {
         self.0.push((hook.target_ptr(), true));
         self
     }
 
     /// Queue the given hook to be disabled.
-    pub fn disable(&mut self, hook: &Hook) -> &mut HookQueue {
+    pub fn disable(mut self, hook: &Hook) -> HookQueue {
         self.0.push((hook.target_ptr(), false));
         self
     }

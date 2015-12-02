@@ -168,9 +168,13 @@ fn test_hook_queue() {
 
     hook2.enable().unwrap();
 
-    let mut queue = HookQueue::new();
-    queue.enable(&hook1).disable(&hook2).enable(&hook3).disable(&hook3);
-    queue.apply().unwrap();
+    HookQueue::new()
+              .enable(&hook1)
+              .disable(&hook2)
+              .enable(&hook3)
+              .disable(&hook3)
+              .apply()
+              .unwrap();
 
     assert_eq!(func1(), "bar");
     assert_eq!(func2(), 7);
