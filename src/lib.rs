@@ -226,6 +226,7 @@ impl<T: Function> ScopedHook<T> {
     /// # Unsafety
     ///
     /// There are a few guarantees to be uphold by the caller:
+    ///
     /// - The target and detour function pointers must point to valid memory for the entire
     ///   lifetime of this hook.
     /// - The given target function type must uniquely match the actual target function. This
