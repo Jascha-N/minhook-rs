@@ -132,19 +132,19 @@ impl HookQueue {
     }
 
     /// Queue the given hook to be enabled.
-    pub fn enable(mut self, hook: &Hook) -> HookQueue {
+    pub fn enable(&mut self, hook: &Hook) -> &mut HookQueue {
         self.0.push((hook.target_ptr(), true));
         self
     }
 
     /// Queue the given hook to be disabled.
-    pub fn disable(mut self, hook: &Hook) -> HookQueue {
+    pub fn disable(&mut self, hook: &Hook) -> &mut HookQueue {
         self.0.push((hook.target_ptr(), false));
         self
     }
 
-    /// Applies all the changes at once and consumes this queue.
-    pub fn apply(self) -> Result<()> {
+    /// Applies all the changes in this queue at once.
+    pub fn apply(&mut self) -> Result<()> {
         // Requires a lock to prevent hooks queued from other threads to be applied as well.
         #[cfg(not(feature = "unstable"))]
         fn obtain_lock() -> MutexGuard<'static, ()> {
@@ -173,7 +173,7 @@ impl HookQueue {
         unsafe {
             let _g = obtain_lock();
 
-            for (target, enabled) in self.0 {
+            for &(target, enabled) in &*self.0 {
                 // Any failure at this point is a bug.
                 if enabled {
                     imp::queue_enable_hook(target).unwrap();
