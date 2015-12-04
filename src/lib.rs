@@ -39,7 +39,8 @@ mod imp {
     }
 
     #[inline]
-    pub unsafe fn create_hook(FnPointer(target): FnPointer, FnPointer(detour): FnPointer) -> Result<FnPointer> {
+    pub unsafe fn create_hook(FnPointer(target): FnPointer,
+                              FnPointer(detour): FnPointer) -> Result<FnPointer> {
         let mut trampoline: *mut c_void = mem::uninitialized();
 
         status_to_result(MH_CreateHook(target, detour, &mut trampoline))
@@ -88,15 +89,15 @@ pub mod prelude {
 
 
 
-/// Result type for all functions and methods in this module.
+/// Result type for most functions and methods in this module.
 pub type Result<T> = result::Result<T, Error>;
 
 
 
 /// Initializes the minhook-rs library.
 ///
-/// It is not required to call this function excplicitly as the other library functions will do it internally.
-/// Calling this function again after a previous successful initialization is a no-op.
+/// It is not required to call this function explicitly as the other library functions will do it
+/// internally. Calling this function again after a successful initialization is a no-op.
 pub fn initialize() -> Result<()> {
     static INIT: Once = ONCE_INIT;
 
@@ -111,7 +112,7 @@ pub fn initialize() -> Result<()> {
 ///
 /// # Unsafety
 ///
-/// This function is very unsafe because any live hooks might still depend on this library. After
+/// This function is unsafe because any live hooks might still depend on this library. After
 /// calling this function existing trampoline functions might point to uninitialized memory.
 /// Only use this function when you are absolutely sure no hook objects will be accessed after
 /// its use.
@@ -217,19 +218,24 @@ pub struct ScopedHook<T: Function> {
 }
 
 impl<T: Function> ScopedHook<T> {
-    /// Install a new `ScopedHook` given a target function and a detour function.
+    /// Create and install a new `ScopedHook` given a target function and a compatible detour
+    /// function.
     ///
     /// The hook is disabled by default.
     ///
     /// # Unsafety
     ///
-    /// The target and detour function pointers should point to valid memory during the lifetime
-    /// of this hook.
-    ///
-    /// While hooking functions with type parameters is possible it is absolutely discouraged.
-    /// Due to optimizations not every concrete implementation of a parameterized function has it's own
-    /// code in the resulting binary. This can lead to situations where a hook is created for more than
-    /// just the the target function and the function signature of the detour function does not match up.
+    /// There are a few guarantees to be uphold by the caller:
+    /// - The target and detour function pointers must point to valid memory for the entire
+    ///   lifetime of this hook.
+    /// - The given target function type must uniquely match the actual target function. This
+    ///   means two things: the given target function type has to be correct, but also there
+    ///   can not be two function pointers with different signatures pointing to the same
+    ///   code location. This last situation can for example occur for generic functions, for
+    ///   which some instances might get optimized into one function during monomorphization.
+    ///   Hooking a function with shared code like this actually leads to hooking all the
+    ///   functions that are at this code location, including those with type signatures
+    ///   that do not match up with the detour function's signature.
     pub unsafe fn install<D>(target: T, detour: D) -> Result<ScopedHook<T>>
     where T: HookableWith<D>, D: Function {
         try!(initialize());
@@ -252,11 +258,19 @@ impl<T: Function> ScopedHook<T> {
 
     /// Uninstalls and destroys this hook.
     ///
-    /// This method returns whether it was succesful as opposed to `drop()`.
-    pub fn destroy(mut self) -> Result<()> {
+    /// This method returns whether it was succesful as opposed to `drop()` which
+    /// silently ignores any errors. If this function fails it returns the error and
+    /// it returns the hook back to the caller.
+    pub fn destroy(mut self) -> result::Result<(), (Error, ScopedHook<T>)> {
         let target = self.target.take().unwrap();
+        let result = unsafe { imp::remove_hook(target.as_ptr()) };
 
-        unsafe { imp::remove_hook(target.as_ptr()) }
+        result.map_err(|error| {
+            (error, ScopedHook {
+                target: Some(target),
+                trampoline: self.trampoline.take()
+            })
+        })
     }
 }
 
@@ -293,11 +307,14 @@ impl<T: Function> StaticHook<T> {
 
     /// Destroys this static hook.
     ///
+    /// If this function fails it returns the error and it returns the hook back to the caller.
+    ///
     /// # Unsafety
     ///
-    /// This method is unsafe since any trampoline function pointers will become dangling.
-    pub unsafe fn destroy(self) -> Result<()> {
-        imp::remove_hook(self.target.as_ptr())
+    /// This method is unsafe since any of this hook's trampoline function pointers will become
+    /// dangling.
+    pub unsafe fn destroy(self) -> result::Result<(), (Error, StaticHook<T>)> {
+        imp::remove_hook(self.target.as_ptr()).map_err(|error| (error, self))
     }
 }
 
@@ -326,9 +343,8 @@ pub trait LazyStaticHookInit {
 /// A thread-safe initializer type for a lazily initialized `StaticHook`.
 ///
 /// This type is implemented by the static variables created with the `static_hooks!` macro.
-/// It is strongly recommended to call `install()` before accessing
-/// the underlying `StaticHook` through derefencing. The reason
-/// for this is that `install()` will return an error when
+/// It is strongly recommended to call `install()` before accessing the underlying `StaticHook`
+/// through derefencing. The reason for this is that `install()` will return an error when
 /// hook installation fails, while dereferencing will panic.
 pub trait LazyStaticHook<T: Function>: Sync {
     #[doc(hidden)]
@@ -361,6 +377,7 @@ impl<T: Function> ops::Deref for LazyStaticHook<T> {
 /// }
 /// ```
 #[macro_export]
+#[cfg_attr(rustfmt, rustfmt_skip)]
 macro_rules! static_hooks {
     // Empty match to terminate recursion
     () => {};
@@ -530,8 +547,11 @@ impl fmt::Pointer for FnPointer {
     }
 }
 
-/// Trait representing a function that can be used as a target function or detour function for hooking.
-#[cfg_attr(feature = "unstable", rustc_on_unimplemented = "The type `{Self}` is not an eligible target function or detour function.")]
+/// Trait representing a function that can be used as a target function or detour function for
+/// hooking.
+#[cfg_attr(feature = "unstable",
+           rustc_on_unimplemented = "The type `{Self}` is not an eligible target function or \
+                                     detour function.")]
 pub trait Function {
     /// Converts this function into an untyped function pointer.
     fn as_ptr(&self) -> FnPointer;
@@ -540,17 +560,22 @@ pub trait Function {
     ///
     /// # Unsafety
     ///
-    /// This method is unsafe because the argument should point to proper executable memory of the correct type.
+    /// This method is unsafe because the argument should point to proper executable memory of the
+    /// correct type.
     unsafe fn from_ptr(ptr: FnPointer) -> Self;
 }
 
 /// Trait representing a "hookable with" relation between a target function and a detour function.
 ///
-/// If a target `Function` implements `HookableWith<Detour>` then `Detour` is a valid detour function for this target.
+/// If a target `Function` implements `HookableWith<Detour>` then `Detour` is a valid detour
+/// function for this target.
 ///
-/// Implementing this trait requires proper understanding of the compatibility of the target and detour functions.
+/// Implementing this trait requires proper understanding of the compatibility of the target and
+/// detour functions.
 /// Incompatible functions can cause all kinds of undefined behaviour.
-#[cfg_attr(feature = "unstable", rustc_on_unimplemented = "The type `{D}` is not a suitable detour function type for a target function of type `{Self}`.")]
+#[cfg_attr(feature = "unstable",
+           rustc_on_unimplemented = "The type `{D}` is not a suitable detour function type for a \
+                                     target function of type `{Self}`.")]
 pub unsafe trait HookableWith<D: Function>: Function {}
 
 
