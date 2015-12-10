@@ -251,9 +251,13 @@ impl<T: Function> ScopedHook<T> {
 
     /// Transforms this hook into a static hook, consuming this object.
     pub fn into_static(mut self) -> StaticHook<T> {
+        let target = self.target.take().unwrap();
+        let trampoline = self.trampoline.take().unwrap();
+        mem::forget(self);
+
         StaticHook {
-            target: self.target.take().unwrap(),
-            trampoline: self.trampoline.take().unwrap(),
+            target: target,
+            trampoline: trampoline,
         }
     }
 
@@ -264,12 +268,14 @@ impl<T: Function> ScopedHook<T> {
     /// it returns the hook back to the caller.
     pub fn destroy(mut self) -> result::Result<(), (Error, ScopedHook<T>)> {
         let target = self.target.take().unwrap();
-        let result = unsafe { imp::remove_hook(target.as_ptr()) };
+        let trampoline = self.trampoline.take().unwrap();
+        mem::forget(self);
 
+        let result = unsafe { imp::remove_hook(target.as_ptr()) };
         result.map_err(|error| {
             (error, ScopedHook {
                 target: Some(target),
-                trampoline: self.trampoline.take()
+                trampoline: Some(trampoline)
             })
         })
     }
@@ -283,9 +289,7 @@ impl<T: Function> Hook for ScopedHook<T> {
 
 impl<T: Function> Drop for ScopedHook<T> {
     fn drop(&mut self) {
-        self.target.as_ref().map(|target| unsafe {
-            let _ = imp::remove_hook(target.as_ptr());
-        });
+        let _ = unsafe { imp::remove_hook(self.target.as_ref().unwrap().as_ptr()) };
     }
 }
 
