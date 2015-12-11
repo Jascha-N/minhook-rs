@@ -260,25 +260,6 @@ impl<T: Function> ScopedHook<T> {
             trampoline: trampoline,
         }
     }
-
-    /// Uninstalls and destroys this hook.
-    ///
-    /// This method returns whether it was succesful as opposed to `drop()` which
-    /// silently ignores any errors. If this function fails it returns the error and
-    /// it returns the hook back to the caller.
-    pub fn destroy(mut self) -> result::Result<(), (Error, ScopedHook<T>)> {
-        let target = self.target.take().unwrap();
-        let trampoline = self.trampoline.take().unwrap();
-        mem::forget(self);
-
-        let result = unsafe { imp::remove_hook(target.as_ptr()) };
-        result.map_err(|error| {
-            (error, ScopedHook {
-                target: Some(target),
-                trampoline: Some(trampoline)
-            })
-        })
-    }
 }
 
 impl<T: Function> Hook for ScopedHook<T> {
@@ -312,14 +293,12 @@ impl<T: Function> StaticHook<T> {
 
     /// Destroys this static hook.
     ///
-    /// If this function fails it returns the error and it returns the hook back to the caller.
-    ///
     /// # Unsafety
     ///
     /// This method is unsafe since any of this hook's trampoline function pointers will become
     /// dangling.
-    pub unsafe fn destroy(self) -> result::Result<(), (Error, StaticHook<T>)> {
-        imp::remove_hook(self.target.as_ptr()).map_err(|error| (error, self))
+    pub unsafe fn destroy(self) -> Result<()> {
+        imp::remove_hook(self.target.as_ptr())
     }
 }
 

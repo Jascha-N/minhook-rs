@@ -1,5 +1,6 @@
-use super::*;
 use std::mem;
+
+use super::*;
 
 fn func_detour(x: i32, y: i32) -> i32 {
     x * y
@@ -31,7 +32,7 @@ fn test_scoped_hook() {
     hook.enable().unwrap();
     assert_eq!(func(2, 5), 10);
 
-    hook.destroy().unwrap();
+    mem::drop(hook);
 
     assert_eq!(func(2, 5), 7);
 }
