@@ -84,7 +84,7 @@ pub mod ffi;
 ///
 /// Glob import this prelude to bring commonly used traits into scope.
 pub mod prelude {
-    pub use super::{Hook, LazyStaticHook, LazyStaticHookInit};
+    pub use super::{Hook, LazyStaticHook};
 }
 
 
@@ -316,14 +316,6 @@ impl<T: Function> From<ScopedHook<T>> for StaticHook<T> {
 
 
 
-/// See [LazyStaticHook](trait.LazyStaticHook.html).
-pub trait LazyStaticHookInit {
-    /// Initialize and install the underlying hook.
-    ///
-    /// Calling this method again after a previous successful initialization is a no-op.
-    fn install(&self) -> Result<()>;
-}
-
 /// A thread-safe initializer type for a lazily initialized `StaticHook`.
 ///
 /// This type is implemented by the static variables created with the `static_hooks!` macro.
@@ -333,11 +325,12 @@ pub trait LazyStaticHookInit {
 pub trait LazyStaticHook<T: Function>: Sync {
     #[doc(hidden)]
     fn __get(&self) -> Result<&StaticHook<T>>;
-}
 
-impl<T: Function> LazyStaticHookInit for LazyStaticHook<T> {
+    /// Initialize and install the underlying hook.
+    ///
+    /// Calling this method again after a previous successful initialization is a no-op.
     fn install(&self) -> Result<()> {
-        self.__get().map(|_|())
+        self.__get().map(|_| ())
     }
 }
 
