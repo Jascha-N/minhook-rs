@@ -171,7 +171,7 @@ impl HookQueue {
         try!(initialize());
 
         unsafe {
-            let _g = obtain_lock();
+            let _lock = obtain_lock();
 
             for &(target, enabled) in &*self.0 {
                 // Any failure at this point is a bug.
@@ -213,8 +213,8 @@ pub trait Hook {
 /// A hook that is destroyed when it goes out of scope.
 #[derive(Debug)]
 pub struct ScopedHook<T: Function> {
-    target: Option<T>,
-    trampoline: Option<T>
+    target: T,
+    trampoline: T::Unsafe
 }
 
 impl<T: Function> ScopedHook<T> {
@@ -241,18 +241,26 @@ impl<T: Function> ScopedHook<T> {
     where T: HookableWith<D>, D: Function {
         try!(initialize());
 
-        let trampoline = T::from_ptr(try!(imp::create_hook(target.as_ptr(), detour.as_ptr())));
+        let trampoline = T::Unsafe::from_ptr(try!(imp::create_hook(target.as_ptr(), detour.as_ptr())));
 
         Ok(ScopedHook {
-            target: Some(target),
-            trampoline: Some(trampoline),
+            target: target,
+            trampoline: trampoline,
         })
     }
 
+    /// Returns an unsafe reference to the trampoline function.
+    ///
+    /// Calling the returned function is always unsafe as it will point to invalid memory after the
+    /// hook is destroyed.
+    pub fn trampoline(&self) -> T::Unsafe {
+        self.trampoline
+    }
+
     /// Transforms this hook into a static hook, consuming this object.
-    pub fn into_static(mut self) -> StaticHook<T> {
-        let target = self.target.take().unwrap();
-        let trampoline = self.trampoline.take().unwrap();
+    pub fn into_static(self) -> StaticHook<T> {
+        let target = self.target;
+        let trampoline = unsafe { T::from_ptr(self.trampoline.as_ptr()) };
         mem::forget(self);
 
         StaticHook {
@@ -262,15 +270,15 @@ impl<T: Function> ScopedHook<T> {
     }
 }
 
-impl<T: Function> Hook for ScopedHook<T> {
-    fn target_ptr(&self) -> FnPointer {
-        self.target.as_ref().unwrap().as_ptr()
+impl<T: Function> Drop for ScopedHook<T> {
+    fn drop(&mut self) {
+        let _ = unsafe { imp::remove_hook(self.target.as_ptr()) };
     }
 }
 
-impl<T: Function> Drop for ScopedHook<T> {
-    fn drop(&mut self) {
-        let _ = unsafe { imp::remove_hook(self.target.as_ref().unwrap().as_ptr()) };
+impl<T: Function> Hook for ScopedHook<T> {
+    fn target_ptr(&self) -> FnPointer {
+        self.target.as_ptr()
     }
 }
 
@@ -287,16 +295,16 @@ pub struct StaticHook<T: Function> {
 
 impl<T: Function> StaticHook<T> {
     /// Returns a reference to the trampoline function.
-    pub fn trampoline(&self) -> &T {
-        &self.trampoline
+    pub fn trampoline(&self) -> T {
+        self.trampoline
     }
 
     /// Destroys this static hook.
     ///
     /// # Unsafety
     ///
-    /// This method is unsafe since any of this hook's trampoline function pointers will become
-    /// dangling.
+    /// This method is unsafe since any of this hook's trampoline function pointers will point
+    /// to invalid memeory afterwards.
     pub unsafe fn destroy(self) -> Result<()> {
         imp::remove_hook(self.target.as_ptr())
     }
@@ -309,7 +317,7 @@ impl<T: Function> Hook for StaticHook<T> {
 }
 
 impl<T: Function> From<ScopedHook<T>> for StaticHook<T> {
-    fn from(scoped: ScopedHook<T>) -> Self {
+    fn from(scoped: ScopedHook<T>) -> StaticHook<T> {
         scoped.into_static()
     }
 }
@@ -529,7 +537,12 @@ impl fmt::Pointer for FnPointer {
 #[cfg_attr(feature = "unstable",
            rustc_on_unimplemented = "The type `{Self}` is not an eligible target function or \
                                      detour function.")]
-pub trait Function {
+pub trait Function: Sized + Copy {
+    /// Safe variant of this function.
+    type Safe: Function;
+    /// Unsafe variant of this function.
+    type Unsafe: Function;
+
     /// Converts this function into an untyped function pointer.
     fn as_ptr(&self) -> FnPointer;
 
@@ -548,8 +561,7 @@ pub trait Function {
 /// function for this target.
 ///
 /// Implementing this trait requires proper understanding of the compatibility of the target and
-/// detour functions.
-/// Incompatible functions can cause all kinds of undefined behaviour.
+/// detour functions. Incompatible functions can cause all kinds of undefined behaviour.
 #[cfg_attr(feature = "unstable",
            rustc_on_unimplemented = "The type `{D}` is not a suitable detour function type for a \
                                      target function of type `{Self}`.")]
@@ -581,17 +593,32 @@ macro_rules! impl_hookable {
     };
 
     (impl_pair: ($($arg:ident),*) ($($fun_tokens:tt)+)) => {
-        impl_hookable!(impl_safe:   ($($arg),*) (       $($fun_tokens)*));
-        impl_hookable!(impl_unsafe: ($($arg),*) (unsafe $($fun_tokens)*));
+        impl_hookable!(impl_fun: ($($arg),*) ($($fun_tokens)*) (unsafe $($fun_tokens)*));
     };
 
-    (impl_safe: ($($arg:ident),*) ($fun_type:ty)) => {
+    (impl_fun: ($($arg:ident),*) ($safe_type:ty) ($unsafe_type:ty)) => {
+        impl_hookable!(impl_core: ($($arg),*) ($safe_type) ($safe_type) ($unsafe_type));
+        impl_hookable!(impl_core: ($($arg),*) ($unsafe_type) ($safe_type) ($unsafe_type));
+
+        impl_hookable!(impl_hookable_with: ($($arg),*) ($safe_type) ($safe_type));
+        impl_hookable!(impl_hookable_with: ($($arg),*) ($unsafe_type) ($unsafe_type));
+        impl_hookable!(impl_hookable_with: ($($arg),*) ($unsafe_type) ($safe_type));
+
+        impl_hookable!(impl_hook_safe: ($($arg),*) ($safe_type));
+        impl_hookable!(impl_hook_unsafe: ($($arg),*) ($unsafe_type));
+    };
+
+    (impl_hookable_with: ($($arg:ident),*) ($target:ty) ($detour:ty)) => {
+        unsafe impl<Ret: 'static, $($arg: 'static),*> HookableWith<$detour> for $target {}
+    };
+
+    (impl_hook_safe: ($($arg:ident),*) ($fun_type:ty)) => {
         impl<Ret: 'static, $($arg: 'static),*> ScopedHook<$fun_type> {
             /// Call the original function.
             #[inline]
             #[allow(non_snake_case)]
             pub fn call_real(&self, $($arg : $arg),*) -> Ret {
-                self.trampoline.unwrap()($($arg),*)
+                unsafe { (self.trampoline)($($arg),*) }
             }
         }
 
@@ -603,17 +630,15 @@ macro_rules! impl_hookable {
                 (self.trampoline)($($arg),*)
             }
         }
-
-        impl_hookable!(impl_fun: ($($arg),*) ($fun_type));
     };
 
-    (impl_unsafe: ($($arg:ident),*) ($fun_type:ty)) => {
+    (impl_hook_unsafe: ($($arg:ident),*) ($fun_type:ty)) => {
         impl<Ret: 'static, $($arg: 'static),*> ScopedHook<$fun_type> {
             /// Call the original function.
             #[inline]
             #[allow(non_snake_case)]
             pub unsafe fn call_real(&self, $($arg : $arg),*) -> Ret {
-                self.trampoline.unwrap()($($arg),*)
+                (self.trampoline)($($arg),*)
             }
         }
 
@@ -625,12 +650,13 @@ macro_rules! impl_hookable {
                 (self.trampoline)($($arg),*)
             }
         }
-
-        impl_hookable!(impl_fun: ($($arg),*) ($fun_type));
     };
 
-    (impl_fun: ($($arg:ident),*) ($fun_type:ty)) => {
+    (impl_core: ($($arg:ident),*) ($fun_type:ty) ($safe_type:ty) ($unsafe_type:ty)) => {
         impl<Ret: 'static, $($arg: 'static),*> Function for $fun_type {
+            type Safe = $safe_type;
+            type Unsafe = $unsafe_type;
+
             #[inline]
             fn as_ptr(&self) -> FnPointer {
                 FnPointer(*self as *mut _)
@@ -641,8 +667,6 @@ macro_rules! impl_hookable {
                 mem::transmute(ptr)
             }
         }
-
-        unsafe impl<Ret: 'static, $($arg: 'static),*> HookableWith<$fun_type> for $fun_type {}
     };
 
     (make_item: $item:item) => {
