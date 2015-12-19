@@ -7,6 +7,8 @@
 #[cfg(feature = "winapi")]
 extern crate winapi;
 
+use std::ptr;
+
 pub use self::winapi::{LPCSTR, LPCWSTR, LPVOID};
 
 #[cfg(not(feature = "winapi"))]
@@ -60,10 +62,10 @@ pub enum MH_STATUS {
 
 /// Can be passed as a parameter to `MH_EnableHook`, `MH_DisableHook`,
 /// `MH_QueueEnableHook` or `MH_QueueDisableHook`.
-pub const MH_ALL_HOOKS: LPVOID = 0 as *mut _;
+pub const MH_ALL_HOOKS: LPVOID = ptr::null_mut();
 
 /// Can be passed as a parameter to `MH_CreateHook` or `MH_CreateHookApi`.
-pub const MH_NO_TRAMPOLINE: *mut LPVOID = 0 as *mut _;
+pub const MH_NO_TRAMPOLINE: *mut LPVOID = ptr::null_mut();
 
 extern "system" {
     /// Initialize the MinHook library.

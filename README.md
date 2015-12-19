@@ -5,7 +5,7 @@
 A function hooking library for the Rust programming language. This library provides efficient and safe bindings to the
 [MinHook](https://github.com/TsudaKageyu/minhook) library.
 
-It currently supports the x86 and x86_64 architectures and the GCC (MinGW) and MSVC toolchains on Windows.
+It currently supports the x86 and x86_64 architectures and the GCC (MinGW) and MSVC toolchains on Windows. Requires Rust nightly.
 The supported target triples are:
 - `i686-pc-windows-msvc`
 - `x86_64-pc-windows-msvc`

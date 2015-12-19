@@ -3,11 +3,12 @@
 //! Rust wrapper around the [MinHook][minhook] library.
 //!
 //! [minhook]: http://www.codeproject.com/KB/winsdk/LibMinHook.aspx
-#![cfg_attr(feature = "unstable", feature(on_unimplemented, static_mutex))]
+
+#![feature(on_unimplemented, static_mutex, const_fn)]
 #![warn(missing_docs)]
 
 use std::{mem, ops, result, fmt};
-use std::sync::{MutexGuard, Once, ONCE_INIT};
+use std::sync::{StaticMutex, Once};
 use std::os::raw::c_void;
 
 pub use error::Error;
@@ -99,7 +100,7 @@ pub type Result<T> = result::Result<T, Error>;
 /// It is not required to call this function explicitly as the other library functions will do it
 /// internally. Calling this function again after a successful initialization is a no-op.
 pub fn initialize() -> Result<()> {
-    static INIT: Once = ONCE_INIT;
+    static INIT: Once = Once::new();
 
     let mut result: Result<()> = Ok(());
     INIT.call_once(|| unsafe {
@@ -145,44 +146,20 @@ impl HookQueue {
 
     /// Applies all the changes in this queue at once.
     pub fn apply(&mut self) -> Result<()> {
-        // Requires a lock to prevent hooks queued from other threads to be applied as well.
-        #[cfg(not(feature = "unstable"))]
-        fn obtain_lock() -> MutexGuard<'static, ()> {
-            use std::sync::Mutex;
-
-            static mut LOCK: *const Mutex<()> = 0 as *const _;
-            static     INIT: Once             = ONCE_INIT;
-
-            unsafe {
-                INIT.call_once(|| LOCK = Box::into_raw(Box::new(Mutex::new(()))));
-                (*LOCK).lock().unwrap()
-            }
-        }
-
-        #[cfg(feature = "unstable")]
-        fn obtain_lock() -> MutexGuard<'static, ()> {
-            use std::sync::{StaticMutex, MUTEX_INIT};
-
-            static LOCK: StaticMutex = MUTEX_INIT;
-
-            LOCK.lock().unwrap()
-        }
-
         try!(initialize());
 
-        unsafe {
-            let _lock = obtain_lock();
+        static LOCK: StaticMutex = StaticMutex::new();
+        let _lock = LOCK.lock().unwrap();
 
-            for &(target, enabled) in &*self.0 {
-                // Any failure at this point is a bug.
-                if enabled {
-                    imp::queue_enable_hook(target).unwrap();
-                } else {
-                    imp::queue_disable_hook(target).unwrap();
-                }
+        for &(target, enabled) in &*self.0 {
+            // Any failure at this point is a bug.
+            if enabled {
+                unsafe { imp::queue_enable_hook(target).unwrap() };
+            } else {
+                unsafe { imp::queue_disable_hook(target).unwrap() };
             }
-            imp::apply_queued()
         }
+        unsafe { imp::apply_queued() }
     }
 }
 
@@ -487,7 +464,7 @@ macro_rules! static_hooks {
                 $detour
 
                 {
-                    use ::std::sync::{Once, ONCE_INIT};
+                    use ::std::sync::Once;
                     use ::std::option::Option::{self, Some, None};
                     use ::std::result::Result::Ok;
 
@@ -498,7 +475,7 @@ macro_rules! static_hooks {
 
                     impl LazyStaticHook<$fun_type> for LazyStaticHookImpl {
                         fn __get(&self) -> Result<&StaticHook<$fun_type>> {
-                            static     INIT: Once                          = ONCE_INIT;
+                            static INIT: Once = Once::new();
                             static mut HOOK: Option<StaticHook<$fun_type>> = None;
 
                             let mut result = Ok(());
@@ -534,9 +511,8 @@ impl fmt::Pointer for FnPointer {
 
 /// Trait representing a function that can be used as a target function or detour function for
 /// hooking.
-#[cfg_attr(feature = "unstable",
-           rustc_on_unimplemented = "The type `{Self}` is not an eligible target function or \
-                                     detour function.")]
+#[rustc_on_unimplemented = "The type `{Self}` is not an eligible target function or \
+                            detour function."]
 pub trait Function: Sized + Copy {
     /// Safe variant of this function.
     type Safe: Function;
@@ -562,9 +538,8 @@ pub trait Function: Sized + Copy {
 ///
 /// Implementing this trait requires proper understanding of the compatibility of the target and
 /// detour functions. Incompatible functions can cause all kinds of undefined behaviour.
-#[cfg_attr(feature = "unstable",
-           rustc_on_unimplemented = "The type `{D}` is not a suitable detour function type for a \
-                                     target function of type `{Self}`.")]
+#[rustc_on_unimplemented = "The type `{D}` is not a suitable detour function type for a \
+                            target function of type `{Self}`."]
 pub unsafe trait HookableWith<D: Function>: Function {}
 
 
