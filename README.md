@@ -5,7 +5,7 @@
 A function hooking library for the Rust programming language. This library provides efficient and safe bindings to the
 [MinHook](https://github.com/TsudaKageyu/minhook) library.
 
-It currently supports the x86 and x86_64 architectures and the GCC (MinGW) and MSVC toolchains on Windows. Requires Rust nightly.
+It currently supports the x86 and x86_64 architectures and the GCC (MinGW) and MSVC toolchains on Windows. Requires the Rust Nightly compiler.
 The supported target triples are:
 - `i686-pc-windows-msvc`
 - `x86_64-pc-windows-msvc`
@@ -29,7 +29,6 @@ extern crate minhook;
 
 ### Features
 The minhook-rs library has the following features:
-- `unstable`        - Enables some gated features only available with the Nightly compiler.
 - `increased_arity` - If there is a need to hook functions with an arity greater than 12, this will allow functions of up to 26 arguments to be hooked.
 - `winapi`          - Because [`winapi`](https://github.com/retep998/winapi-rs) is such a huge dependency, it is optional.
 
