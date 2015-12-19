@@ -13,9 +13,5 @@ build = "build.rs"
 version = "0.2.5"
 optional = true
 
-[dependencies.clippy]
-git = "https://github.com/Manishearth/rust-clippy"
-optional = true
-
 [features]
 increased_arity = []
