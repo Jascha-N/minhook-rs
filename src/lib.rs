@@ -30,9 +30,9 @@ pub type Result<T> = result::Result<T, Error>;
 
 /// Function type for custom panic handling.
 ///
-/// It takes the name of the static hook and a reference the panic argument.
+/// It takes the path of the static hook and a reference the panic argument.
 /// Panicking or returning from this function results in an `abort()`.
-pub type PanicHandler = fn(&'static str, &(Any + Send + 'static));
+pub type PanicHandler = fn(&str, &(Any + Send + 'static));
 
 /// Initializes the minhook-rs library.
 ///
@@ -145,7 +145,7 @@ impl<T: Function> Hook<T> {
     }
 
     unsafe fn new_inner(target: FnPointer, detour: FnPointer) -> Result<T> {
-        let mut trampoline: ffi::LPVOID = mem::uninitialized();
+        let mut trampoline = mem::uninitialized();
         try!(s2r(ffi::MH_CreateHook(target.to_raw(), detour.to_raw(), &mut trampoline)));
 
         Ok(T::from_ptr(FnPointer::from_raw(trampoline)))
@@ -373,7 +373,7 @@ pub enum __StaticHookTarget<T: Function> {
 }
 
 #[doc(hidden)]
-pub fn __handle_panic(name: &'static str, arg: Box<Any + Send + 'static>) -> ! {
+pub fn __handle_panic(path: &'static str, name: &'static str, arg: Box<Any + Send + 'static>) -> ! {
     use std::io::Write;
 
     extern {
@@ -383,8 +383,10 @@ pub fn __handle_panic(name: &'static str, arg: Box<Any + Send + 'static>) -> ! {
     let arg = AssertRecoverSafe::new(arg);
 
     let _ = panic::recover(move || {
+        let full_path = format!("{}::{}", path, name);
+
         if let &Some(panic_handler) = PANIC_HANDLER.get().unwrap() {
-            panic_handler(name, &**arg)
+            panic_handler(&full_path, &**arg)
         } else {
             let message = if let Some(message) = arg.downcast_ref::<&str>() {
                 Some(*message)
@@ -394,7 +396,7 @@ pub fn __handle_panic(name: &'static str, arg: Box<Any + Send + 'static>) -> ! {
                 None
             };
 
-            let _ = write!(&mut io::stderr(), "The detour function for `{}` panicked", name);
+            let _ = write!(&mut io::stderr(), "The detour function for `{}` panicked", full_path);
             if let Some(message) = message {
                 let _ = write!(&mut io::stderr(), " with the message: {}", message);
             }
@@ -594,7 +596,7 @@ macro_rules! static_hooks {
                 ::std::panic::recover(|| {
                     let &$crate::__StaticHookInner(_, ref closure) = __DATA.get().unwrap();
                     closure($($arg_name),*)
-                }).unwrap_or_else(|arg| $crate::__handle_panic(stringify!($var_name), arg))
+                }).unwrap_or_else(|arg| $crate::__handle_panic(module_path!(), stringify!($var_name), arg))
             }
         }
     };
