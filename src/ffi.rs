@@ -5,24 +5,11 @@
 //! reason to use this module directly.
 #![allow(dead_code)]
 
-#[cfg(feature = "winapi")]
 extern crate winapi;
 
 use std::ptr;
 
 pub use self::winapi::{LPCSTR, LPCWSTR, LPVOID};
-
-#[cfg(not(feature = "winapi"))]
-mod winapi {
-    /// A pointer to a constant null-terminated string of 8-bit Windows (ANSI) characters.
-    pub type LPCSTR = *const ::std::os::raw::c_char;
-
-    /// A pointer to a constant null-terminated string of 16-bit Unicode characters.
-    pub type LPCWSTR = *const ::std::os::raw::c_ushort;
-
-    /// A pointer to any type.
-    pub type LPVOID = *mut ::std::os::raw::c_void;
-}
 
 /// MinHook Error Codes.
 #[must_use]

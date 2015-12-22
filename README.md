@@ -28,9 +28,8 @@ extern crate minhook;
 ```
 
 ### Features
-The minhook-rs library has the following features:
+The minhook-rs library has the following feature:
 - `increased_arity` - If there is a need to hook functions with an arity greater than 12, this will allow functions of up to 26 arguments to be hooked.
-- `winapi`          - Because [`winapi`](https://github.com/retep998/winapi-rs) is such a huge dependency, it is optional.
 
 ## Example
 

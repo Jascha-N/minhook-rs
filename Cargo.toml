@@ -9,9 +9,8 @@ readme = "README.md"
 links = "MinHook"
 build = "build.rs"
 
-[dependencies.winapi]
-version = "0.2.5"
-optional = true
+[dependencies]
+winapi = "0.2.5"
 
 [features]
 increased_arity = []
