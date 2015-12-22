@@ -28,4 +28,3 @@ build_script:
 
 test_script:
   - cargo test
-  - cargo test --features "winapi increased_arity"
