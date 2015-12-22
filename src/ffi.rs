@@ -3,6 +3,7 @@
 //! The functions exposed in this module provide absolutely no guarantees with
 //! respect to type-safety of hooked functions. There should generally be no
 //! reason to use this module directly.
+#![allow(dead_code)]
 
 #[cfg(feature = "winapi")]
 extern crate winapi;

@@ -42,7 +42,7 @@ pub enum Error {
 
 impl Error {
     /// Constructs an `Error` from a MinHook status.
-    pub fn from(status: MH_STATUS) -> Option<Error> {
+    pub fn from_status(status: MH_STATUS) -> Option<Error> {
         match status {
             MH_STATUS::MH_OK => None,
             MH_STATUS::MH_ERROR_ALREADY_INITIALIZED => Some(Error::AlreadyInitialized),
@@ -79,14 +79,14 @@ impl error::Error for Error {
             Error::FunctionNotFound => "function not found",
 
             Error::InvalidModuleName => "invalid module name",
-            Error::InvalidFunctionName => "invalid function name",
+            Error::InvalidFunctionName => "invalid function name"
         }
     }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let message = match *self {
+         write!(fmt, "{}", match *self {
             Error::AlreadyInitialized => "MinHook is already initialized.",
             Error::NotInitialized => "MinHook is not initialized yet, or already uninitialized.",
             Error::AlreadyCreated => "The hook for the specified target function is already \
@@ -105,9 +105,7 @@ impl fmt::Display for Error {
             Error::FunctionNotFound => "The specified function is not found.",
 
             Error::InvalidModuleName => "The specified module name is invalid.",
-            Error::InvalidFunctionName => "The specified function name is invalid.",
-        };
-
-        write!(fmt, "{:?} error: {}", self, message)
+            Error::InvalidFunctionName => "The specified function name is invalid."
+        })
     }
 }

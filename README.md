@@ -37,42 +37,39 @@ The minhook-rs library has the following features:
 Example using a static hook.
 
 ```rust
+#![feature(const_fn, recover)]
+
 #[macro_use]
 extern crate minhook;
 extern crate winapi;
 extern crate user32;
 
 use std::ptr;
-use std::ffi::CString;
-use minhook::prelude::*;
 
-mod hooks {
-    use winapi::{HWND, LPCSTR, UINT, c_int};
+use winapi::{HWND, LPCSTR, UINT, c_int};
 
-    static_hooks! {
-        // Create a hook for user32::MessageBoxA
-        pub unsafe hook<unsafe extern "system" fn(HWND, LPCSTR, LPCSTR, UINT) -> c_int>
-        MessageBoxA(wnd, text, caption, flags) for ::user32::MessageBoxA {
-            // Switch caption and text and call the original function
-            MessageBoxA.call_real(wnd, caption, text, flags)
-        }
-    }
+static_hooks! {
+    // Create a hook for user32::MessageBoxA.
+    impl MessageBoxA for user32::MessageBoxA: unsafe extern "system" fn(HWND, LPCSTR, LPCSTR, UINT) -> c_int;
 }
 
 fn main() {
-	// Install the hook
-    hooks::MessageBoxA.install().unwrap();
+    // Create a detour closure. This closure can capture any Sync variables.
+    let detour = |wnd, text, caption, flags| unsafe { MessageBoxA.call_real(wnd, caption, text, flags) };
 
-    let hello = CString::new(&b"Hello"[..]).unwrap();
-    let world = CString::new(&b"World"[..]).unwrap();
+	// Install the hook.
+    unsafe { MessageBoxA.initialize(detour).unwrap(); }
 
-    // Call the function
-    unsafe { user32::MessageBoxA(ptr::null_mut(), hello.as_ptr(), world.as_ptr(), winapi::MB_OK); }
+    let hello = b"Hello\0".as_ptr() as LPCSTR;
+    let world = b"World\0".as_ptr() as LPCSTR;
 
-    // Enable the hook
-    hooks::MessageBoxA.enable().unwrap();
+    // Call the function.
+    unsafe { user32::MessageBoxA(ptr::null_mut(), hello, world, winapi::MB_OK); }
 
-    // Call the - now hooked - function
-    unsafe { user32::MessageBoxA(ptr::null_mut(), hello.as_ptr(), world.as_ptr(), winapi::MB_OK); }
+    // Enable the hook.
+    MessageBoxA.enable().unwrap();
+
+    // Call the - now hooked - function.
+    unsafe { user32::MessageBoxA(ptr::null_mut(), hello, world, winapi::MB_OK); }
 }
 ```
