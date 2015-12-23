@@ -12,7 +12,7 @@ use super::Hook;
 pub struct FnPointer(*mut ());
 
 impl FnPointer {
-    /// Creates function pointer from a raw pointer.
+    /// Creates a function pointer from a raw pointer.
     ///
     /// # Safety
     ///
