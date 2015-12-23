@@ -1,121 +1,34 @@
-use std::{mem, env, fs, io};
-use std::fs::File;
-use std::io::prelude::*;
-use std::process::Command;
-use std::path::{Path, PathBuf};
+extern crate gcc;
 
-fn copy_recursive(from: &Path, to: &Path) -> io::Result<()> {
-    // Don't copy .git folder or file
-    if from.file_name().map(|file_name| file_name == ".git").unwrap_or(false) {
-        return Ok(())
-    }
+use std::env;
+use std::path::Path;
 
-    if try!(fs::metadata(from)).is_dir()  {
-        try!(fs::create_dir(to));
-        for entry in try!(fs::read_dir(from)) {
-            let entry = try!(entry);
-            let mut to = PathBuf::from(to);
-            to.push(entry.file_name());
-            try!(copy_recursive(&entry.path(), &to));
-        }
-    } else {
-        try!(fs::copy(from, to));
-    }
-
-    Ok(())
-}
-
-fn patch_project(project: &Path) -> io::Result<()> {
-    let mut src = try!(File::open(project));
-    let mut data = String::new();
-    try!(src.read_to_string(&mut data));
-    mem::drop(src);
-
-    let data = data.replace("<RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>",
-                            "<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>")
-                   .replace("<RuntimeLibrary>MultiThreaded</RuntimeLibrary>",
-                            "<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>");
-
-    let mut dst = try!(File::create(project));
-    try!(dst.write_all(data.as_bytes()));
-
-    Ok(())
-}
+use gcc::Config;
 
 fn main() {
     let root_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let out_dir  = env::var("OUT_DIR").unwrap();
-    let target   = env::var("TARGET").unwrap();
+    let target = env::var("TARGET").unwrap();
 
     let parts = target.splitn(4, '-').collect::<Vec<_>>();
     let arch = parts[0];
     let sys  = parts[2];
-    let abi  = parts[3];
 
     if sys != "windows" {
-        panic!("Platform '{}' not supported.", sys);
+        panic!("Platform `{}` not supported.", sys);
     }
 
-    let platform = match arch {
-        "i686"   => "Win32",
-        "x86_64" => "x64",
-        _        => panic!("Architecture '{}' not supported.", arch)
+    let hde_suffix = match arch {
+        "i686"   => "32",
+        "x86_64" => "64",
+        _        => panic!("Architecture `{}` not supported.", arch)
     };
 
-    let _ = fs::remove_dir_all(&out_dir);
-    copy_recursive(&Path::new(&root_dir).join("lib").join("minhook"), out_dir.as_ref()).expect("Error copying sources");
+    let src_dir = Path::new(&root_dir).join("lib/minhook/src");
 
-    match abi {
-        "gnu" => {
-            let status = Command::new("make")
-                                 .current_dir(&out_dir)
-                                 .arg("-f")
-                                 .arg("build/MinGW/Makefile")
-                                 .arg("libMinHook.a")
-                                 .status()
-                                 .expect("Error executing make");
-
-            if !status.success() {
-                panic!("'make' exited with code: {}.", status.code().unwrap());
-            }
-        }
-
-        "msvc" => {
-            let profile = env::var("PROFILE").unwrap();
-
-            let version = match env::var("VisualStudioVersion").ok().as_ref().map(|s| s as &str) {
-                Some("14.0") => "VC14",
-                Some("12.0") => "VC12",
-                Some(_)      => panic!("Unsupported Visual Studio version."),
-                None         => panic!("'VisualStudioVersion' environment variable not set or malformed.")
-            };
-
-            let mut project_path = PathBuf::from(&out_dir);
-            project_path.push("build");
-            project_path.push(&version);
-            project_path.push("libMinHook.vcxproj");
-
-            patch_project(&project_path).expect("Error patching VS project file");
-
-            let status = Command::new("MSBuild")
-                                 .arg("/nologo")
-                                 .arg("/property:TargetName=MinHook")
-                                 .arg(&format!("/property:Configuration={}", profile))
-                                 .arg(&format!("/property:Platform={}", platform))
-                                 .arg(&format!("/property:OutDir={}\\", out_dir))
-                                 .arg(&project_path)
-                                 .status()
-                                 .expect("Error executing MSBuild");
-
-            if !status.success() {
-                panic!("'MSBuild' exited with code: {}.", status.code().unwrap());
-            }
-        }
-
-        abi =>
-            panic!("ABI '{}' not supported.", abi)
-     };
-
-     println!("cargo:rustc-link-search=native={}", out_dir);
-     println!("cargo:rustc-link-lib=MinHook");
+    Config::new()
+           .file(src_dir.join("buffer.c"))
+           .file(src_dir.join("hook.c"))
+           .file(src_dir.join("trampoline.c"))
+           .file(src_dir.join(format!("HDE/hde{}.c", hde_suffix)))
+           .compile("libminhook.a");
 }
