@@ -23,7 +23,7 @@ fn main() {
         _        => panic!("Architecture `{}` not supported.", arch)
     };
 
-    let src_dir = Path::new(&root_dir).join("lib/minhook/src");
+    let src_dir = Path::new(&root_dir).join("src/minhook/src");
 
     Config::new()
            .file(src_dir.join("buffer.c"))
