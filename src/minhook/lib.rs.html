@@ -800,16 +800,26 @@
 <span id="757">757</span>
 <span id="758">758</span>
 <span id="759">759</span>
+<span id="760">760</span>
+<span id="761">761</span>
+<span id="762">762</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! # The minhook-rs library</span>
 <span class='doccomment'>//! This library provides function hooking support to Rust by providing a</span>
 <span class='doccomment'>//! Rust wrapper around the [MinHook][minhook] library.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! [minhook]: http://www.codeproject.com/KB/winsdk/LibMinHook.aspx</span>
-<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>on_unimplemented</span>, <span class='ident'>static_mutex</span>, <span class='ident'>const_fn</span>, <span class='ident'>std_panic</span>, <span class='ident'>recover</span>, <span class='ident'>associated_consts</span>, <span class='ident'>unboxed_closures</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>on_unimplemented</span>,
+           <span class='ident'>static_mutex</span>,
+           <span class='ident'>const_fn</span>,
+           <span class='ident'>std_panic</span>,
+           <span class='ident'>recover</span>,
+           <span class='ident'>associated_consts</span>,
+           <span class='ident'>unboxed_closures</span>,
+           <span class='ident'>core_intrinsics</span>)]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>warn</span>(<span class='ident'>missing_docs</span>)]</span>
 
-<span class='kw'>use</span> <span class='ident'>std</span>::{<span class='ident'>io</span>, <span class='ident'>mem</span>, <span class='ident'>ops</span>, <span class='ident'>result</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::{<span class='ident'>io</span>, <span class='ident'>mem</span>, <span class='ident'>ops</span>, <span class='ident'>result</span>, <span class='ident'>intrinsics</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>any</span>::<span class='ident'>Any</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>panic</span>::{<span class='self'>self</span>, <span class='ident'>AssertRecoverSafe</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>StaticMutex</span>};
@@ -1179,10 +1189,6 @@
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>__handle_panic</span>(<span class='ident'>path</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='ident'>arg</span>: <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Any</span> <span class='op'>+</span> <span class='ident'>Send</span> <span class='op'>+</span> <span class='lifetime'>&#39;static</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='op'>!</span> {
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Write</span>;
 
-    <span class='kw'>extern</span> {
-        <span class='kw'>fn</span> <span class='ident'>abort</span>() <span class='op'>-&gt;</span> <span class='op'>!</span>;
-    }
-
     <span class='kw'>let</span> <span class='ident'>arg</span> <span class='op'>=</span> <span class='ident'>AssertRecoverSafe</span>::<span class='ident'>new</span>(<span class='ident'>arg</span>);
 
     <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>panic</span>::<span class='ident'>recover</span>(<span class='kw'>move</span> <span class='op'>||</span> {
@@ -1207,7 +1213,7 @@
         }
     });
 
-    <span class='kw'>unsafe</span> { <span class='ident'>abort</span>() }
+    <span class='kw'>unsafe</span> { <span class='ident'>intrinsics</span>::<span class='ident'>abort</span>() }
 }
 
 
