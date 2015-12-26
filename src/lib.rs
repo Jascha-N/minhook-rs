@@ -3,10 +3,17 @@
 //! Rust wrapper around the [MinHook][minhook] library.
 //!
 //! [minhook]: http://www.codeproject.com/KB/winsdk/LibMinHook.aspx
-#![feature(on_unimplemented, static_mutex, const_fn, std_panic, recover, associated_consts, unboxed_closures)]
+#![feature(on_unimplemented,
+           static_mutex,
+           const_fn,
+           std_panic,
+           recover,
+           associated_consts,
+           unboxed_closures,
+           core_intrinsics)]
 #![warn(missing_docs)]
 
-use std::{io, mem, ops, result};
+use std::{io, mem, ops, result, intrinsics};
 use std::any::Any;
 use std::panic::{self, AssertRecoverSafe};
 use std::sync::{StaticMutex};
@@ -376,10 +383,6 @@ pub enum __StaticHookTarget<T: Function> {
 pub fn __handle_panic(path: &'static str, name: &'static str, arg: Box<Any + Send + 'static>) -> ! {
     use std::io::Write;
 
-    extern {
-        fn abort() -> !;
-    }
-
     let arg = AssertRecoverSafe::new(arg);
 
     let _ = panic::recover(move || {
@@ -404,7 +407,7 @@ pub fn __handle_panic(path: &'static str, name: &'static str, arg: Box<Any + Sen
         }
     });
 
-    unsafe { abort() }
+    unsafe { intrinsics::abort() }
 }
 
 
