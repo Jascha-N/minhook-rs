@@ -264,7 +264,7 @@ impl<T: Function> StaticHook<T> {
     }
 
     fn inner(&self) -> &'static Hook<T> {
-        let &__StaticHookInner(ref hook, _) = self.hook.get().expect("attempt to access uninitializaed static hook");
+        let &__StaticHookInner(ref hook, _) = self.hook.get().expect("attempt to access uninitialized static hook");
         hook
     }
 }
