@@ -369,7 +369,7 @@ macro_rules! static_hooks {
     // Step 1: parse attributes
     (parse_attr: ($($args:tt)*)
                | $(#[$var_attr:meta])* $next:tt $($rest:tt)*) => {
-        static_hooks!(parse_pub: (($($var_attr)*)) | $next $($rest)*);
+        static_hooks!(parse_pub: ($($args)* ($($var_attr)*)) | $next $($rest)*);
     };
 
     // Step 2: parse optional pub modifier
