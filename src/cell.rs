@@ -1,48 +1,22 @@
-use std::{fmt, error};
 use std::cell::UnsafeCell;
-use std::sync::Once;
+use std::sync::{Once, StaticRwLock};
 
-#[derive(Debug)]
-pub enum Error<E> {
-    Dead,
-    Initialization(E)
-}
-
-impl<E: error::Error> error::Error for Error<E> {
-    fn description(&self) -> &str {
-        match *self {
-            Error::Dead => "cell is dead",
-            Error::Initialization(_) => "error during initialization"
-        }
-    }
-
-    fn cause(&self) -> Option<&error::Error> {
-        match *self {
-            Error::Initialization(ref error) => Some(error),
-            _ => None
-        }
-    }
-}
-
-impl<E: fmt::Display> fmt::Display for Error<E> {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Error::Dead => write!(fmt, "The cell is dead (forever uninitialized)."),
-            Error::Initialization(ref error) => write!(fmt, "An error occurred during initialization: {}.", error)
-        }
-    }
+#[derive(Copy, PartialEq, Eq, Clone, Debug)]
+pub enum Error {
+    AlreadyInitialized,
+    AccessedBeforeInitialization
 }
 
 #[doc(hidden)]
-pub struct InitCell<T: Sync> {
+pub struct StaticInitCell<T> {
     data: UnsafeCell<Option<T>>,
     once: Once,
 }
 
-impl<T: Sync> InitCell<T> {
+impl<T> StaticInitCell<T> {
     #[doc(hidden)]
-    pub const fn new() -> InitCell<T> {
-        InitCell {
+    pub const fn new() -> StaticInitCell<T> {
+        StaticInitCell {
             data: UnsafeCell::new(None),
             once: Once::new()
         }
@@ -57,28 +31,79 @@ impl<T: Sync> InitCell<T> {
     }
 
     #[doc(hidden)]
-    pub fn initialize<F, E>(&'static self, f: F) -> Result<bool, Error<E>>
-    where F: FnOnce() -> Result<T, E> {
-        let mut result = None;
+    pub fn initialize(&'static self, value: T) -> Result<(), Error> {
+        let mut first = false;
 
-        self.once.call_once(|| {
-            result = Some(f().map(|value| unsafe {
-                self.set_unsync(value);
-            }));
+        self.once.call_once(|| unsafe {
+            self.set_unsync(value);
+            first = true;
         });
 
-        unsafe {
-            result.map_or_else(|| self.get_ref_unsync().ok_or(Error::Dead).map(|_| false),
-                               |result| result.map(|_| true).map_err(Error::Initialization))
+        if first {
+            Ok(())
+        } else {
+            unsafe {
+                self.get_ref_unsync().ok_or(Error::AccessedBeforeInitialization)
+                                     .and_then(|_| Err(Error::AlreadyInitialized))
+            }
         }
     }
 
     #[doc(hidden)]
-    pub fn get(&'static self) -> Option<&'static T> {
+    pub fn get(&'static self) -> Result<&'static T, Error> {
         self.once.call_once(|| ());
 
-        unsafe { self.get_ref_unsync() }
+        unsafe { self.get_ref_unsync().ok_or(Error::AccessedBeforeInitialization) }
     }
 }
 
-unsafe impl<T: Sync> Sync for InitCell<T> {}
+unsafe impl<T: Sync> Sync for StaticInitCell<T> {}
+
+
+
+pub struct StaticRwCell<T> {
+    data: UnsafeCell<T>,
+    lock: StaticRwLock,
+}
+
+impl<T> StaticRwCell<T> {
+    pub const fn new(value: T) -> StaticRwCell<T> {
+        StaticRwCell {
+            data: UnsafeCell::new(value),
+            lock: StaticRwLock::new()
+        }
+    }
+
+    unsafe fn set_unsync(&self, value: T) {
+        *self.data.get() = value
+    }
+
+    unsafe fn get_ref_unsync(&self) -> &T {
+        &*self.data.get()
+    }
+
+    pub fn set(&'static self, value: T) {
+        let _lock = self.lock.write();
+
+        unsafe { self.set_unsync(value); }
+    }
+
+    pub fn with<F, R>(&'static self, f: F) -> R
+    where F: FnOnce(&T) -> R {
+        let _lock = self.lock.read();
+
+        unsafe { f(self.get_ref_unsync()) }
+    }
+}
+
+impl<T> StaticRwCell<Option<T>> {
+    pub fn take(&'static self) -> Option<T> {
+        let _lock = self.lock.write();
+
+        let option = unsafe { &mut *self.data.get() };
+        option.take()
+    }
+}
+
+unsafe impl<T: Send + Sync> Sync for StaticRwCell<T> {}
+unsafe impl<T: Send + Sync> Send for StaticRwCell<T> {}

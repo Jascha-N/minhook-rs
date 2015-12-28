@@ -5,6 +5,7 @@
 //! [minhook]: http://www.codeproject.com/KB/winsdk/LibMinHook.aspx
 #![feature(on_unimplemented,
            static_mutex,
+           static_rwlock,
            const_fn,
            std_panic,
            recover,
@@ -13,15 +14,14 @@
            core_intrinsics)]
 #![warn(missing_docs)]
 
-use std::{io, mem, ops, result, intrinsics};
-use std::any::Any;
-use std::panic::{self, AssertRecoverSafe};
-use std::sync::{StaticMutex};
+use std::{mem, ops, result};
+use std::error::Error as StdError;
+use std::sync::{Once, StaticMutex};
 
-use cell::{Error as CellError};
+use cell::Error as CellError;
 use function::{Function, FnPointer, HookableWith};
 
-pub use cell::InitCell;
+pub use cell::StaticInitCell;
 pub use error::Error;
 
 mod cell;
@@ -29,31 +29,12 @@ mod error;
 mod ffi;
 
 pub mod function;
+pub mod panic;
 
 
 
 /// Result type for most functions and methods in this module.
 pub type Result<T> = result::Result<T, Error>;
-
-/// Function type for custom panic handling.
-///
-/// It takes the path of the static hook and a reference the panic argument.
-/// Panicking or returning from this function results in an `abort()`.
-pub type PanicHandler = fn(&str, &(Any + Send + 'static));
-
-/// Initializes the minhook-rs library.
-///
-/// It is not required to call this function explicitly as the other library functions will do it
-/// internally, unless you want to set a custom panic handler. This function will return an error
-/// if the library has already been initialized either explicitly or implicitly or if initialization
-/// failed (unlikely).
-pub fn initialize(panic_handler: Option<PanicHandler>) -> Result<()> {
-    ensure_init(panic_handler).and_then(|first| if first {
-        Ok(())
-    } else {
-        Err(Error::AlreadyInitialized)
-    })
-}
 
 /// Uninitializes the minhook-rs library.
 ///
@@ -92,7 +73,7 @@ impl HookQueue {
 
     /// Applies all the changes in this queue at once.
     pub fn apply(&mut self) -> Result<()> {
-        try!(ensure_init(None));
+        initialize();
 
         static LOCK: StaticMutex = StaticMutex::new();
         let _lock = LOCK.lock().unwrap();
@@ -140,7 +121,7 @@ impl<T: Function> Hook<T> {
     ///   or LLVM decide to merge multiple functions with the same code into one.
     pub unsafe fn new<D>(target: T, detour: D) -> Result<Hook<T>>
     where T: HookableWith<D>, D: Function {
-        try!(ensure_init(None));
+        initialize();
 
         let target = target.to_ptr();
         let trampoline = try!(Hook::new_inner(target, detour.to_ptr()));
@@ -205,14 +186,14 @@ unsafe impl<T: Function> Send for Hook<T> {}
 /// hook before initializing or trying to initialize the hook twice (even after the first attempt
 /// failed) will result in a panic.
 pub struct StaticHook<T: Function> {
-    hook: &'static InitCell<__StaticHookInner<T>>,
+    hook: &'static StaticInitCell<__StaticHookInner<T>>,
     target: __StaticHookTarget<T>,
     detour: T
 }
 
 impl<T: Function> StaticHook<T> {
     #[doc(hidden)]
-    pub const fn __new(hook: &'static InitCell<__StaticHookInner<T>>, target: __StaticHookTarget<T>, detour: T) -> StaticHook<T> {
+    pub const fn __new(hook: &'static StaticInitCell<__StaticHookInner<T>>, target: __StaticHookTarget<T>, detour: T) -> StaticHook<T> {
         StaticHook {
             hook: hook,
             target: target,
@@ -226,20 +207,17 @@ impl<T: Function> StaticHook<T> {
     }
 
     unsafe fn initialize_ref(&self, closure: &'static (Fn<T::Args, Output = T::Output> + Sync)) -> Result<()> {
-        let result = self.hook.initialize(|| {
-            let target = match self.target {
-                __StaticHookTarget::Static(target) => target,
-                __StaticHookTarget::Dynamic(..) => unimplemented!()
-            };
+        let target = match self.target {
+            __StaticHookTarget::Static(target) => target,
+            __StaticHookTarget::Dynamic(..) => unimplemented!()
+        };
 
-            Hook::new(target, self.detour).map(|hook| __StaticHookInner(hook, closure))
-        });
+        let hook = try!(Hook::new(target, self.detour).map(|hook| __StaticHookInner(hook, closure)));
 
-        match result {
-            Ok(true) => Ok(()),
-            Err(CellError::Initialization(error)) => Err(error),
-            Ok(false) | Err(CellError::Dead) => panic!("attempt to initialize static hook more than once or after access")
-        }
+        self.hook.initialize(hook).map_err(|error| match error {
+            CellError::AlreadyInitialized => Error::AlreadyCreated,
+            CellError::AccessedBeforeInitialization => panic!("attempt to initialize static hook that was already accessed")
+        })
     }
 
     unsafe fn initialize_box(&self, closure: Box<Fn<T::Args, Output = T::Output> + Sync>) -> Result<()> {
@@ -328,18 +306,14 @@ impl<T: Function> ops::Deref for StaticHookWithDefault<T> {
 
 
 
+static INIT: Once = Once::new();
 
-static PANIC_HANDLER: InitCell<Option<PanicHandler>> = InitCell::new();
-
-fn ensure_init(panic_handler: Option<PanicHandler>) -> Result<bool> {
-    let result = PANIC_HANDLER.initialize(|| {
-        unsafe { s2r(ffi::MH_Initialize()).map(|_| panic_handler) }
+fn initialize() {
+    INIT.call_once(|| unsafe {
+        let _ = s2r(ffi::MH_Initialize()).map_err(|error| {
+            panic!("initialization failed with error: {}", error.description());
+        });
     });
-
-    result.map_err(|error| match error {
-        CellError::Initialization(error) => error,
-        CellError::Dead => panic!("attempt to initialize library after initialization previously failed")
-    })
 }
 
 fn s2r(status: ffi::MH_STATUS) -> Result<()> {
@@ -377,37 +351,6 @@ pub struct __StaticHookInner<T: Function>(Hook<T>, pub &'static (Fn<T::Args, Out
 pub enum __StaticHookTarget<T: Function> {
     Static(T),
     Dynamic(&'static str, &'static str)
-}
-
-#[doc(hidden)]
-pub fn __handle_panic(path: &'static str, name: &'static str, arg: Box<Any + Send + 'static>) -> ! {
-    use std::io::Write;
-
-    let arg = AssertRecoverSafe::new(arg);
-
-    let _ = panic::recover(move || {
-        let full_path = format!("{}::{}", path, name);
-
-        if let &Some(panic_handler) = PANIC_HANDLER.get().unwrap() {
-            panic_handler(&full_path, &**arg)
-        } else {
-            let message = if let Some(message) = arg.downcast_ref::<&str>() {
-                Some(*message)
-            } else if let Some(message) = arg.downcast_ref::<String>() {
-                Some(message.as_ref())
-            } else {
-                None
-            };
-
-            let _ = write!(&mut io::stderr(), "The detour function for `{}` panicked", full_path);
-            if let Some(message) = message {
-                let _ = write!(&mut io::stderr(), " with the message: {}", message);
-            }
-            let _ = writeln!(&mut io::stderr(), ". Aborting.");
-        }
-    });
-
-    unsafe { intrinsics::abort() }
 }
 
 
@@ -564,7 +507,7 @@ macro_rules! static_hooks {
             #[allow(non_upper_case_globals)]
             $(#[$var_attr])*
             $($var_mod)* static $var_name: $crate::StaticHook<$fn_type> = {
-                static __DATA: $crate::InitCell<$crate::__StaticHookInner<$fn_type>> = $crate::InitCell::new();
+                static __DATA: $crate::StaticInitCell<$crate::__StaticHookInner<$fn_type>> = $crate::StaticInitCell::new();
 
                 static_hooks!(make_detour: ($guard) ($var_name) ($($fn_mod)*) ($($arg_name)*) ($($arg_type)*) ($return_type));
 
@@ -581,7 +524,7 @@ macro_rules! static_hooks {
             #[allow(non_upper_case_globals)]
             $(#[$var_attr])*
             $($var_mod)* static $var_name: $crate::StaticHookWithDefault<$fn_type> = {
-                static __DATA: $crate::InitCell<$crate::__StaticHookInner<$fn_type>> = $crate::InitCell::new();
+                static __DATA: $crate::StaticInitCell<$crate::__StaticHookInner<$fn_type>> = $crate::StaticInitCell::new();
 
                 static_hooks!(make_detour: ($guard) ($var_name) ($($fn_mod)*) ($($arg_name)*) ($($arg_type)*) ($return_type));
 
@@ -599,7 +542,7 @@ macro_rules! static_hooks {
                 ::std::panic::recover(|| {
                     let &$crate::__StaticHookInner(_, ref closure) = __DATA.get().unwrap();
                     closure($($arg_name),*)
-                }).unwrap_or_else(|arg| $crate::__handle_panic(module_path!(), stringify!($var_name), arg))
+                }).unwrap_or_else(|payload| $crate::panic::__handle(module_path!(), stringify!($var_name), payload))
             }
         }
     };
