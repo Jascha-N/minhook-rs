@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["set_handler","Registers a custom detour panic handler, replacing any that was previously registered."],["take_handler","Unregisters the current panic handler, returning it."]],"struct":[["DetourPanicInfo","A struct providing information about a panic that happened inside of a guarded detour function."]]});

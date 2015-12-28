@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `Result` type in crate `minhook`.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, Result">
+    <meta name="description" content="API documentation for the Rust `DetourPanicInfo` struct in crate `minhook`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, DetourPanicInfo">
 
-    <title>minhook::Result - Rust</title>
+    <title>minhook::panic::DetourPanicInfo - Rust</title>
 
-    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
-    <link rel="stylesheet" type="text/css" href="../main.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
     
@@ -27,7 +27,7 @@
 
     <nav class="sidebar">
         
-        <p class='location'><a href='index.html'>minhook</a></p><script>window.sidebarCurrent = {name: 'Result', ty: 'type', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+        <p class='location'><a href='../index.html'>minhook</a>::<wbr><a href='index.html'>panic</a></p><script>window.sidebarCurrent = {name: 'DetourPanicInfo', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
     <nav class="sub">
@@ -41,14 +41,23 @@
         </form>
     </nav>
 
-    <section id='main' class="content type">
-<h1 class='fqn'><span class='in-band'><a href='index.html'>minhook</a>::<wbr><a class='type' href=''>Result</a></span><span class='out-of-band'><span id='render-detail'>
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>minhook</a>::<wbr><a href='index.html'>panic</a>::<wbr><a class='struct' href=''>DetourPanicInfo</a></span><span class='out-of-band'><span id='render-detail'>
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-13090' class='srclink' href='../src/minhook/lib.rs.html#37' title='goto source code'>[src]</a></span></h1>
-<pre class='rust typedef'>type Result&lt;T&gt; = <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;T, <a class='enum' href='../minhook/enum.Error.html' title='minhook::Error'>Error</a>&gt;;</pre><div class='docblock'><p>Result type for most functions and methods in this module.</p>
-</div></section>
+        </span><a id='src-13056' class='srclink' href='../../src/minhook/panic.rs.html#13-16' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct DetourPanicInfo&lt;'a&gt; {
+    // some fields omitted
+}</pre><div class='docblock'><p>A struct providing information about a panic that happened inside of a guarded detour function.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../../minhook/panic/struct.DetourPanicInfo.html' title='minhook::panic::DetourPanicInfo'>DetourPanicInfo</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.payload' class='method'><code>fn <a href='#method.payload' class='fnname'>payload</a>(&amp;self) -&gt; &amp;<a class='trait' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html' title='core::any::Any'>Any</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a></code></h4>
+<div class='docblock'><p>Returns the payload associated with the panic.</p>
+
+<p>This will commonly, but not always, be a <code>&amp;&#39;static str</code> or <code>String</code>.</p>
+</div><h4 id='method.detour' class='method'><code>fn <a href='#method.detour' class='fnname'>detour</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
+<div class='docblock'><p>Returns the name of the static hook for which the detour function
+panicked.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -100,13 +109,13 @@
     
 
     <script>
-        window.rootPath = "../";
+        window.rootPath = "../../";
         window.currentCrate = "minhook";
         window.playgroundUrl = "";
     </script>
-    <script src="../jquery.js"></script>
-    <script src="../main.js"></script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
     
-    <script defer src="../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

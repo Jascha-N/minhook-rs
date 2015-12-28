@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `PanicHandler` type in crate `minhook`.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, PanicHandler">
+    <meta name="description" content="API documentation for the Rust `set_handler` fn in crate `minhook`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, set_handler">
 
-    <title>minhook::PanicHandler - Rust</title>
+    <title>minhook::panic::set_handler - Rust</title>
 
-    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
-    <link rel="stylesheet" type="text/css" href="../main.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
     
@@ -27,7 +27,7 @@
 
     <nav class="sidebar">
         
-        <p class='location'><a href='index.html'>minhook</a></p><script>window.sidebarCurrent = {name: 'PanicHandler', ty: 'type', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+        <p class='location'><a href='../index.html'>minhook</a>::<wbr><a href='index.html'>panic</a></p><script>window.sidebarCurrent = {name: 'set_handler', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
     <nav class="sub">
@@ -41,16 +41,27 @@
         </form>
     </nav>
 
-    <section id='main' class="content type">
-<h1 class='fqn'><span class='in-band'><a href='index.html'>minhook</a>::<wbr><a class='type' href=''>PanicHandler</a></span><span class='out-of-band'><span id='render-detail'>
+    <section id='main' class="content fn">
+<h1 class='fqn'><span class='in-band'>Function <a href='../index.html'>minhook</a>::<wbr><a href='index.html'>panic</a>::<wbr><a class='fn' href=''>set_handler</a></span><span class='out-of-band'><span id='render-detail'>
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-13030' class='srclink' href='../src/minhook/lib.rs.html#42' title='goto source code'>[src]</a></span></h1>
-<pre class='rust typedef'>type PanicHandler = fn(&amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, &amp;<a class='trait' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html' title='core::any::Any'>Any</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + 'static);</pre><div class='docblock'><p>Function type for custom panic handling.</p>
+        </span><a id='src-13067' class='srclink' href='../../src/minhook/panic.rs.html#52-55' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn set_handler&lt;F&gt;(handler: F) <span class='where'>where F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Fn.html' title='core::ops::Fn'>Fn</a>(&amp;<a class='struct' href='../../minhook/panic/struct.DetourPanicInfo.html' title='minhook::panic::DetourPanicInfo'>DetourPanicInfo</a>) + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + 'static</span></pre><div class='docblock'><p>Registers a custom detour panic handler, replacing any that was previously
+registered.</p>
 
-<p>It takes the path of the static hook and a reference the panic argument.
-Panicking or returning from this function results in an <code>abort()</code>.</p>
+<p>The panic handler is invoked when an extern detour function panics just before
+the code would unwind into foreign code. The default handler prints a message
+to standard error and aborts the process to prevent further unwinding, but this behavior
+can be customized with the <code>set_handler</code> and <code>take_handler</code> functions.</p>
+
+<p>The handler is provided with a <code>DetourPanicInfo</code> struct which contains information
+about the origin of the panic, including the payload passed to <code>panic!</code> and
+the name of the name of the associated hook.</p>
+
+<p>If the handler panics or returns normally, the process will be aborted.</p>
+
+<p>The panic handler is a global resource.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -103,13 +114,13 @@ Panicking or returning from this function results in an <code>abort()</code>.</p
     
 
     <script>
-        window.rootPath = "../";
+        window.rootPath = "../../";
         window.currentCrate = "minhook";
         window.playgroundUrl = "";
     </script>
-    <script src="../jquery.js"></script>
-    <script src="../main.js"></script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
     
-    <script defer src="../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

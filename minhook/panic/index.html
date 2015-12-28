@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `function` mod in crate `minhook`.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, function">
+    <meta name="description" content="API documentation for the Rust `panic` mod in crate `minhook`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, panic">
 
-    <title>minhook::function - Rust</title>
+    <title>minhook::panic - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
@@ -27,7 +27,7 @@
 
     <nav class="sidebar">
         
-        <p class='location'><a href='../index.html'>minhook</a></p><script>window.sidebarCurrent = {name: 'function', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
+        <p class='location'><a href='../index.html'>minhook</a></p><script>window.sidebarCurrent = {name: 'panic', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
     </nav>
 
     <nav class="sub">
@@ -42,51 +42,39 @@
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>minhook</a>::<wbr><a class='mod' href=''>function</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>minhook</a>::<wbr><a class='mod' href=''>panic</a></span><span class='out-of-band'><span id='render-detail'>
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-247' class='srclink' href='../../src/minhook/function.rs.html#1-190' title='goto source code'>[src]</a></span></h1>
-<div class='docblock'><p>Module containing information about hookable functions.</p>
-
-<p>The traits in this module are automatically implemented and should generally not be implemented
-by users of this library.</p>
+        </span><a id='src-13049' class='srclink' href='../../src/minhook/panic.rs.html#1-91' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Panic handling for panics caught at foreign code boundaries in detour functions.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
                     <tr class=' module-item'>
-                        <td><a class='struct' href='struct.FnPointer.html'
-                               title='minhook::function::FnPointer'>FnPointer</a></td>
+                        <td><a class='struct' href='struct.DetourPanicInfo.html'
+                               title='minhook::panic::DetourPanicInfo'>DetourPanicInfo</a></td>
                         <td class='docblock short'>
-                             <p>An untyped function pointer.</p>
+                             <p>A struct providing information about a panic that happened inside of a guarded detour function.</p>
 
                         </td>
                     </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
                     <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Function.html'
-                               title='minhook::function::Function'>Function</a></td>
+                        <td><a class='fn' href='fn.set_handler.html'
+                               title='minhook::panic::set_handler'>set_handler</a></td>
                         <td class='docblock short'>
-                             <p>Trait representing a function that can be used as a target function or detour function for
-hooking.</p>
+                             <p>Registers a custom detour panic handler, replacing any that was previously
+registered.</p>
 
                         </td>
                     </tr>
                 
                     <tr class=' module-item'>
-                        <td><a class='trait' href='trait.HookableWith.html'
-                               title='minhook::function::HookableWith'>HookableWith</a></td>
+                        <td><a class='fn' href='fn.take_handler.html'
+                               title='minhook::panic::take_handler'>take_handler</a></td>
                         <td class='docblock short'>
-                             <p>Marker trait indicating that the function <code>Self</code> can be hooked by the given function <code>D</code>.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.UnsafeFunction.html'
-                               title='minhook::function::UnsafeFunction'>UnsafeFunction</a></td>
-                        <td class='docblock short'>
-                             <p>Trait representing an unsafe function.</p>
+                             <p>Unregisters the current panic handler, returning it.</p>
 
                         </td>
                     </tr>

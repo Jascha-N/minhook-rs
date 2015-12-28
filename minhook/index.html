@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/minhook/lib.rs.html#1-762' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-0' class='srclink' href='../src/minhook/lib.rs.html#1-705' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'>
 <h1 id='the-minhook-rs-library' class='section-header'><a href='#the-minhook-rs-library'>The minhook-rs library</a></h1>
 <p>This library provides function hooking support to Rust by providing a
@@ -58,6 +58,15 @@ Rust wrapper around the <a href="http://www.codeproject.com/KB/winsdk/LibMinHook
                                title='minhook::function'>function</a></td>
                         <td class='docblock short'>
                              <p>Module containing information about hookable functions.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='panic/index.html'
+                               title='minhook::panic'>panic</a></td>
+                        <td class='docblock short'>
+                             <p>Panic handling for panics caught at foreign code boundaries in detour functions.</p>
 
                         </td>
                     </tr>
@@ -121,15 +130,6 @@ Rust wrapper around the <a href="http://www.codeproject.com/KB/winsdk/LibMinHook
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
                     <tr class=' module-item'>
-                        <td><a class='fn' href='fn.initialize.html'
-                               title='minhook::initialize'>initialize</a></td>
-                        <td class='docblock short'>
-                             <p>Initializes the minhook-rs library.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
                         <td><a class='fn' href='fn.uninitialize.html'
                                title='minhook::uninitialize'>uninitialize</a></td>
                         <td class='docblock short'>
@@ -139,15 +139,6 @@ Rust wrapper around the <a href="http://www.codeproject.com/KB/winsdk/LibMinHook
                     </tr>
                 </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='type' href='type.PanicHandler.html'
-                               title='minhook::PanicHandler'>PanicHandler</a></td>
-                        <td class='docblock short'>
-                             <p>Function type for custom panic handling.</p>
-
-                        </td>
-                    </tr>
-                
                     <tr class=' module-item'>
                         <td><a class='type' href='type.Result.html'
                                title='minhook::Result'>Result</a></td>
