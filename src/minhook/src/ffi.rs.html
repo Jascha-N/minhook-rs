@@ -9,8 +9,8 @@
 
     <title>ffi.rs.html -- source</title>
 
-    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
-    <link rel="stylesheet" type="text/css" href="../../main.css">
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
     
@@ -179,6 +179,20 @@
 <span id="136">136</span>
 <span id="137">137</span>
 <span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Raw bindings for the MinHook library.</span>
 <span class='doccomment'>//!</span>
@@ -234,9 +248,6 @@
 <span class='doccomment'>/// `MH_QueueEnableHook` or `MH_QueueDisableHook`.</span>
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MH_ALL_HOOKS</span>: <span class='ident'>LPVOID</span> <span class='op'>=</span> <span class='ident'>ptr</span>::<span class='ident'>null_mut</span>();
 
-<span class='doccomment'>/// Can be passed as a parameter to `MH_CreateHook` or `MH_CreateHookApi`.</span>
-<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MH_NO_TRAMPOLINE</span>: <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>LPVOID</span> <span class='op'>=</span> <span class='ident'>ptr</span>::<span class='ident'>null_mut</span>();
-
 <span class='kw'>extern</span> <span class='string'>&quot;system&quot;</span> {
     <span class='doccomment'>/// Initialize the MinHook library.</span>
     <span class='doccomment'>///</span>
@@ -258,7 +269,7 @@
     <span class='doccomment'>///                  the target function.</span>
     <span class='doccomment'>/// * `ppOriginal` - A pointer to the trampoline function, which will be</span>
     <span class='doccomment'>///                  used to call the original target function.</span>
-    <span class='doccomment'>///                  This parameter can be `MH_NO_TRAMPOLINE`.</span>
+    <span class='doccomment'>///                  This parameter can be `null`.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>MH_CreateHook</span>(<span class='ident'>pTarget</span>: <span class='ident'>LPVOID</span>, <span class='ident'>pDetour</span>: <span class='ident'>LPVOID</span>, <span class='ident'>ppOriginal</span>: <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>LPVOID</span>) <span class='op'>-&gt;</span> <span class='ident'>MH_STATUS</span>;
 
     <span class='doccomment'>/// Creates a Hook for the specified API function, in disabled state.</span>
@@ -272,10 +283,27 @@
     <span class='doccomment'>///                  the target function.</span>
     <span class='doccomment'>/// * `ppOriginal` - A pointer to the trampoline function, which will be</span>
     <span class='doccomment'>///                  used to call the original target function.</span>
-    <span class='doccomment'>///                  This parameter can be `MH_NO_TRAMPOLINE`.</span>
+    <span class='doccomment'>///                  This parameter can be `null`.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>MH_CreateHookApi</span>(<span class='ident'>pszModule</span>: <span class='ident'>LPCWSTR</span>, <span class='ident'>pszProcName</span>: <span class='ident'>LPCSTR</span>, <span class='ident'>pDetour</span>: <span class='ident'>LPVOID</span>,
-                            <span class='ident'>ppOriginal</span>: <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>LPVOID</span>)
-                            <span class='op'>-&gt;</span> <span class='ident'>MH_STATUS</span>;
+                            <span class='ident'>ppOriginal</span>: <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>LPVOID</span>) <span class='op'>-&gt;</span> <span class='ident'>MH_STATUS</span>;
+
+    <span class='doccomment'>/// Creates a Hook for the specified API function, in disabled state.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// # Arguments</span>
+    <span class='doccomment'>/// * `pszModule`  - A pointer to the loaded module name which contains the</span>
+    <span class='doccomment'>///                  target function.</span>
+    <span class='doccomment'>/// * `pszTarget`  - A pointer to the target function name, which will be</span>
+    <span class='doccomment'>///                  overridden by the detour function.</span>
+    <span class='doccomment'>/// * `pDetour`    - A pointer to the detour function, which will override</span>
+    <span class='doccomment'>///                  the target function.</span>
+    <span class='doccomment'>/// * `ppOriginal` - A pointer to the trampoline function, which will be</span>
+    <span class='doccomment'>///                  used to call the original target function.</span>
+    <span class='doccomment'>///                  This parameter can be `null`.</span>
+    <span class='doccomment'>/// * `ppTarget`   - A pointer to the target function, which will be used</span>
+    <span class='doccomment'>///                  with other functions.</span>
+    <span class='doccomment'>///                  This parameter can be `null`.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>MH_CreateHookApiEx</span>(<span class='ident'>pszModule</span>: <span class='ident'>LPCWSTR</span>, <span class='ident'>pszProcName</span>: <span class='ident'>LPCSTR</span>, <span class='ident'>pDetour</span>: <span class='ident'>LPVOID</span>,
+                              <span class='ident'>ppOriginal</span>: <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>LPVOID</span>, <span class='ident'>ppTarget</span>: <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>LPVOID</span>) <span class='op'>-&gt;</span> <span class='ident'>MH_STATUS</span>;
 
     <span class='doccomment'>/// Removes an already created hook.</span>
     <span class='doccomment'>///</span>
@@ -362,7 +390,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>
@@ -371,13 +399,13 @@
     
 
     <script>
-        window.rootPath = "../../";
+        window.rootPath = "../../../";
         window.currentCrate = "minhook";
         window.playgroundUrl = "";
     </script>
-    <script src="../../jquery.js"></script>
-    <script src="../../main.js"></script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
     
-    <script defer src="../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

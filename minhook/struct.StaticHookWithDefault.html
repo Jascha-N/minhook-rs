@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-13201' class='srclink' href='../src/minhook/lib.rs.html#271-274' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-13206' class='srclink' href='../src/minhook/src/lib.rs.html#271-274' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct StaticHookWithDefault&lt;T: <a class='trait' href='../minhook/function/trait.Function.html' title='minhook::function::Function'>Function</a>&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A hook with a static lifetime and a default detour closure.</p>
@@ -76,7 +76,7 @@ failed) will result in a panic.</p>
 
 <h1 id='safety-1' class='section-header'><a href='#safety-1'>Safety</a></h1>
 <p>See documentation for <a href="struct.Hook.html#method.new"><code>Hook::new()</code></a>.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T: <a class='trait' href='../minhook/function/trait.Function.html' title='minhook::function::Function'>Function</a>&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Deref.html' title='core::ops::Deref'>Deref</a> for <a class='struct' href='../minhook/struct.StaticHookWithDefault.html' title='minhook::StaticHookWithDefault'>StaticHookWithDefault</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='assoc_type.Target' class='type'><code>type Target = <a class='struct' href='../minhook/struct.StaticHook.html' title='minhook::StaticHook'>StaticHook</a>&lt;T&gt;</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T: <a class='trait' href='../minhook/function/trait.Function.html' title='minhook::function::Function'>Function</a>&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Deref.html' title='core::ops::Deref'>Deref</a> for <a class='struct' href='../minhook/struct.StaticHookWithDefault.html' title='minhook::StaticHookWithDefault'>StaticHookWithDefault</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='associatedtype.Target' class='type'><code>type Target = <a class='struct' href='../minhook/struct.StaticHook.html' title='minhook::StaticHook'>StaticHook</a>&lt;T&gt;</code></h4>
 <h4 id='method.deref' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Deref.html#method.deref' class='fnname'>deref</a>(&amp;self) -&gt; &amp;<a class='struct' href='../minhook/struct.StaticHook.html' title='minhook::StaticHook'>StaticHook</a>&lt;T&gt;</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
@@ -121,7 +121,7 @@ failed) will result in a panic.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>
