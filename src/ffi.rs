@@ -52,9 +52,6 @@ pub enum MH_STATUS {
 /// `MH_QueueEnableHook` or `MH_QueueDisableHook`.
 pub const MH_ALL_HOOKS: LPVOID = ptr::null_mut();
 
-/// Can be passed as a parameter to `MH_CreateHook` or `MH_CreateHookApi`.
-pub const MH_NO_TRAMPOLINE: *mut LPVOID = ptr::null_mut();
-
 extern "system" {
     /// Initialize the MinHook library.
     ///
@@ -76,7 +73,7 @@ extern "system" {
     ///                  the target function.
     /// * `ppOriginal` - A pointer to the trampoline function, which will be
     ///                  used to call the original target function.
-    ///                  This parameter can be `MH_NO_TRAMPOLINE`.
+    ///                  This parameter can be `null`.
     pub fn MH_CreateHook(pTarget: LPVOID, pDetour: LPVOID, ppOriginal: *mut LPVOID) -> MH_STATUS;
 
     /// Creates a Hook for the specified API function, in disabled state.
@@ -90,10 +87,27 @@ extern "system" {
     ///                  the target function.
     /// * `ppOriginal` - A pointer to the trampoline function, which will be
     ///                  used to call the original target function.
-    ///                  This parameter can be `MH_NO_TRAMPOLINE`.
+    ///                  This parameter can be `null`.
     pub fn MH_CreateHookApi(pszModule: LPCWSTR, pszProcName: LPCSTR, pDetour: LPVOID,
-                            ppOriginal: *mut LPVOID)
-                            -> MH_STATUS;
+                            ppOriginal: *mut LPVOID) -> MH_STATUS;
+
+    /// Creates a Hook for the specified API function, in disabled state.
+    ///
+    /// # Arguments
+    /// * `pszModule`  - A pointer to the loaded module name which contains the
+    ///                  target function.
+    /// * `pszTarget`  - A pointer to the target function name, which will be
+    ///                  overridden by the detour function.
+    /// * `pDetour`    - A pointer to the detour function, which will override
+    ///                  the target function.
+    /// * `ppOriginal` - A pointer to the trampoline function, which will be
+    ///                  used to call the original target function.
+    ///                  This parameter can be `null`.
+    /// * `ppTarget`   - A pointer to the target function, which will be used
+    ///                  with other functions.
+    ///                  This parameter can be `null`.
+    pub fn MH_CreateHookApiEx(pszModule: LPCWSTR, pszProcName: LPCSTR, pDetour: LPVOID,
+                              ppOriginal: *mut LPVOID, ppTarget: *mut LPVOID) -> MH_STATUS;
 
     /// Removes an already created hook.
     ///
