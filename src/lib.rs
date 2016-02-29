@@ -287,9 +287,8 @@ impl<T: Function> StaticHook<T> {
     }
 
     unsafe fn initialize_box(&self, closure: Box<Fn<T::Args, Output = T::Output> + Sync>) -> Result<()> {
-        let guard = BoxGuard::new(closure);
-        try!(self.initialize_ref(guard.as_static_ref()));
-        guard.release();
+        try!(self.initialize_ref(&*(&*closure as *const _)));
+        mem::forget(closure);
         Ok(())
     }
 
@@ -388,28 +387,6 @@ fn initialize() {
 
 fn s2r(status: ffi::MH_STATUS) -> Result<()> {
     Error::from_status(status).map_or(Ok(()), Err)
-}
-
-struct BoxGuard<T: ?Sized>(*mut T);
-
-impl<T: ?Sized> BoxGuard<T> {
-    fn new(value: Box<T>) -> BoxGuard<T> {
-        BoxGuard(Box::into_raw(value))
-    }
-
-    fn release(self) {
-        mem::forget(self);
-    }
-
-    unsafe fn as_static_ref(&self) -> &'static T {
-        &*self.0
-    }
-}
-
-impl<T: ?Sized> Drop for BoxGuard<T> {
-    fn drop(&mut self) {
-        unsafe { mem::drop(Box::from_raw(self.0)); }
-    }
 }
 
 
