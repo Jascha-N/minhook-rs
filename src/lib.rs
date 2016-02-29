@@ -1,9 +1,10 @@
 //! # The minhook-rs library
 //! This library provides function hooking support to Rust by providing a
-//! Rust wrapper around the [MinHook][minhook] library.
+//! wrapper around the [MinHook][minhook] library.
 //!
 //! [minhook]: http://www.codeproject.com/KB/winsdk/LibMinHook.aspx
 #![feature(on_unimplemented,
+           static_recursion,
            static_mutex,
            static_rwlock,
            const_fn,
@@ -14,9 +15,14 @@
            core_intrinsics)]
 #![warn(missing_docs)]
 
-use std::{mem, ops, result};
+extern crate winapi;
+extern crate kernel32;
+
+use std::{mem, ptr, ops, result};
 use std::error::Error as StdError;
 use std::sync::{Once, StaticMutex};
+use std::ffi::OsStr;
+use std::os::windows::ffi::OsStrExt;
 
 use cell::Error as CellError;
 use function::{Function, FnPointer, HookableWith};
@@ -99,6 +105,15 @@ pub struct Hook<T: Function> {
     trampoline: T
 }
 
+/// A function name used for dynamically hooking a function.
+#[derive(Debug)]
+pub enum FunctionName<S: AsRef<OsStr>> {
+    /// The function's ordinal value.
+    Ordinal(u16),
+    /// The function's name.
+    String(S)
+}
+
 impl<T: Function> Hook<T> {
     /// Create a new hook given a target function and a compatible detour function.
     ///
@@ -109,34 +124,84 @@ impl<T: Function> Hook<T> {
     ///
     /// # Safety
     ///
-    /// This function is unsafe because there are a few guarantees to be upheld by the caller
-    /// that can not be checked:
-    ///
-    /// * The target and detour function pointers must point to valid memory for the entire
-    ///   lifetime of this hook.
-    /// * The given target function type must uniquely match the actual target function. This
-    ///   means two things: the given target function type has to be correct, but also there
-    ///   can not be two function pointers with different signatures pointing to the same
-    ///   code location. This last situation can for example happen when the Rust compiler
-    ///   or LLVM decide to merge multiple functions with the same code into one.
+    /// The given target function type must uniquely match the actual target function. This
+    /// means two things: the given target function type has to be correct, but also there
+    /// can not be two function pointers with different signatures pointing to the same
+    /// code location. This last situation can for example happen when the Rust compiler
+    /// or LLVM decide to merge multiple functions with the same code into one.
     pub unsafe fn new<D>(target: T, detour: D) -> Result<Hook<T>>
     where T: HookableWith<D>, D: Function {
         initialize();
 
         let target = target.to_ptr();
-        let trampoline = try!(Hook::new_inner(target, detour.to_ptr()));
-
-        Ok(Hook {
-            target: target,
-            trampoline: trampoline,
-        })
-    }
-
-    unsafe fn new_inner(target: FnPointer, detour: FnPointer) -> Result<T> {
+        let detour = detour.to_ptr();
         let mut trampoline = mem::uninitialized();
         try!(s2r(ffi::MH_CreateHook(target.to_raw(), detour.to_raw(), &mut trampoline)));
 
-        Ok(T::from_ptr(FnPointer::from_raw(trampoline)))
+        Ok(Hook {
+            target: target,
+            trampoline: T::from_ptr(FnPointer::from_raw(trampoline)),
+        })
+    }
+
+    /// Create a new hook given the name of the module, the name of the function symbol and a
+    /// compatible detour function.
+    ///
+    /// The module has to be loaded before this function is called. This function does not
+    /// attempt to load the module first. The hook is disabled by default.
+    ///
+    /// # Safety
+    ///
+    /// The target module must remain loaded in memory for the entire duration of the hook.
+    ///
+    /// See `new()` for more safety requirements.
+    pub unsafe fn new_api<M, N, D>(target_module: M, target_function: FunctionName<N>, detour: D) -> Result<Hook<T>>
+    where M: AsRef<OsStr>, N: AsRef<OsStr>, T: HookableWith<D>, D: Function {
+        fn str_to_wstring(string: &OsStr) -> Option<Vec<winapi::WCHAR>> {
+            let mut wide = string.encode_wide().collect::<Vec<_>>();
+            if wide.contains(&0) {
+                return None;
+            }
+            wide.push(0);
+            Some(wide)
+        }
+
+        initialize();
+
+        let module_name = try!(str_to_wstring(target_module.as_ref()).ok_or(Error::InvalidModuleName));
+
+        let (function_name, _data) = match target_function {
+            FunctionName::Ordinal(ord) => (ord as winapi::LPCSTR, Vec::new()),
+            FunctionName::String(name) => {
+                let symbol_name_wide = try!(str_to_wstring(name.as_ref()).ok_or(Error::InvalidFunctionName));
+
+                let size = kernel32::WideCharToMultiByte(winapi::CP_ACP, 0, symbol_name_wide.as_ptr(), -1, ptr::null_mut(), 0, ptr::null(), ptr::null_mut());
+                if size == 0 {
+                    return Err(Error::InvalidFunctionName);
+                }
+
+                let mut buffer = Vec::with_capacity(size as usize);
+                buffer.set_len(size as usize);
+
+                let size = kernel32::WideCharToMultiByte(winapi::CP_ACP, 0, symbol_name_wide.as_ptr(), -1, buffer.as_mut_ptr(), size, ptr::null(), ptr::null_mut());
+                if size == 0 {
+                    return Err(Error::InvalidFunctionName);
+                }
+
+                (buffer.as_ptr(), buffer)
+            }
+        };
+
+        let detour = detour.to_ptr();
+        let mut trampoline = mem::uninitialized();
+        let mut target = mem::uninitialized();
+
+        try!(s2r(ffi::MH_CreateHookApiEx(module_name.as_ptr(), function_name, detour.to_raw(), &mut trampoline, &mut target)));
+
+        Ok(Hook {
+            target: FnPointer::from_raw(target),
+            trampoline: T::from_ptr(FnPointer::from_raw(trampoline)),
+        })
     }
 
     /// Returns an unsafe reference to the trampoline function.
@@ -176,10 +241,12 @@ unsafe impl<T: Function> Send for Hook<T> {}
 
 /// A hook with a static lifetime.
 ///
-/// This hook can only be constructed using the `static_hooks!` macro. It has the form:
+/// This hook can only be constructed using the `static_hooks!` macro. It has one of the
+/// following forms:
 ///
 /// ```ignore
 /// #[ATTR]* pub? impl HOOK_VAR_NAME for PATH::TO::TARGET: FN_TYPE;
+/// #[ATTR]* pub? impl HOOK_VAR_NAME for "FUNCTION" in "MODULE": FN_TYPE;
 /// ```
 ///
 /// Before accessing this hook it is **required** to call `initialize()` **once**. Accessing the
@@ -207,14 +274,13 @@ impl<T: Function> StaticHook<T> {
     }
 
     unsafe fn initialize_ref(&self, closure: &'static (Fn<T::Args, Output = T::Output> + Sync)) -> Result<()> {
-        let target = match self.target {
-            __StaticHookTarget::Static(target) => target,
-            __StaticHookTarget::Dynamic(..) => unimplemented!()
+        let hook = match self.target {
+            __StaticHookTarget::Static(target) => try!(Hook::new(target, self.detour)),
+            __StaticHookTarget::Dynamic(module_name, function_name) =>
+                try!(Hook::new_api(module_name, FunctionName::String(function_name), self.detour))
         };
 
-        let hook = try!(Hook::new(target, self.detour).map(|hook| __StaticHookInner(hook, closure)));
-
-        self.hook.initialize(hook).map_err(|error| match error {
+        self.hook.initialize(__StaticHookInner(hook, closure)).map_err(|error| match error {
             CellError::AlreadyInitialized => Error::AlreadyCreated,
             CellError::AccessedBeforeInitialization => panic!("attempt to initialize static hook that was already accessed")
         })
@@ -259,10 +325,12 @@ impl<T: Function> ops::Deref for StaticHook<T> {
 
 /// A hook with a static lifetime and a default detour closure.
 ///
-/// This hook can only be constructed using the `static_hooks!` macro. It has the form:
+/// This hook can only be constructed using the `static_hooks!` macro. It has one of the
+/// following forms:
 ///
 /// ```ignore
 /// #[ATTR]* pub? impl HOOK_VAR_NAME for PATH::TO::TARGET: FN_TYPE = CLOSURE_EXPR;
+/// #[ATTR]* pub? impl HOOK_VAR_NAME for "FUNCTION" in "MODULE": FN_TYPE = CLOSURE_EXPR;
 /// ```
 ///
 /// Before accessing this hook it is **required** to call `initialize()` **once**. Accessing the
@@ -355,14 +423,43 @@ pub enum __StaticHookTarget<T: Function> {
 
 
 
-/// Declares one or more thread-safe static hooks.
+/// Defines one or more static hooks.
 ///
-/// The syntax for these hooks is:
+/// A `static_hooks!` block can contain one or more hook definitions of the following forms:
 ///
 /// ```ignore
-/// #[ATTR]* pub? impl HOOK_VAR_NAME for PATH::TO::TARGET: FN_TYPE = CLOSURE_EXPR;
+/// // Creates a `StaticHookWithDefault`
+/// #[ATTR]* pub? impl HOOK_VAR_NAME for PATH::TO::TARGET: FN_TYPE = FN_EXPR;
+/// #[ATTR]* pub? impl HOOK_VAR_NAME for "FUNCTION" in "MODULE": FN_TYPE = FN_EXPR;
+///
+/// // Creates a `StaticHook`
 /// #[ATTR]* pub? impl HOOK_VAR_NAME for PATH::TO::TARGET: FN_TYPE;
+/// #[ATTR]* pub? impl HOOK_VAR_NAME for "FUNCTION" in "MODULE": FN_TYPE;
 /// ```
+///
+/// All of the above definitions create a static variable with the specified name of
+/// type `StaticHook` or `StaticHookWithDefault` for a target function of the given
+/// type. If the function signature contains `extern`, any panics that happen inside of the
+/// detour `Fn` are automatically caught before they can propagate across foreign code boundaries.
+/// See the `panic` submodule for more information.
+///
+/// The first two forms create a static hook with a default detour `Fn`. This is useful if
+/// the detour `Fn` is a closure that does not need to capture any local variables
+/// or if the detour `Fn` is just a normal function. See `StaticHookWithDefault`.
+///
+/// The last two forms require a `Fn` to be supplied at the time of initialization of the
+/// static hook. In this case a closure that captures local variables can be supplied.
+/// See `StaticHook`.
+///
+/// The first and third forms are used for hooking functions by their compile-time identifier.
+///
+/// The second and fourth form will try to find the target function by name at initialization
+/// instead of at compile time. These forms require the exported function symbol name and
+/// its containing module's name to be supplied.
+///
+/// The optional `pub` keyword can be used to give the resulting hook variable public
+/// visibility. Any attributes used on a hook definition will be applied to the resulting
+/// hook variable.
 #[macro_export]
 #[cfg_attr(rustfmt, rustfmt_skip)]
 macro_rules! static_hooks {
@@ -402,11 +499,11 @@ macro_rules! static_hooks {
     };
 
     // Step 4: parse name and target
-    // (parse_name_target: ($($args:tt)*)
-    //                   | $var_name:ident for $target_fn_name:tt in $target_mod_name:tt : $($rest:tt)*) =>
-    // {
-    //     static_hooks!(parse_fn_unsafe: ($($args)* ($var_name) ($crate::__StaticHookTarget::Dynamic($target_mod_name, $target_fn_name))) | $($rest)*);
-    // };
+    (parse_name_target: ($($args:tt)*)
+                      | $var_name:ident for $target_fn_name:tt in $target_mod_name:tt : $($rest:tt)*) =>
+    {
+        static_hooks!(parse_fn_unsafe: ($($args)* ($var_name) ($crate::__StaticHookTarget::Dynamic($target_mod_name, $target_fn_name))) | $($rest)*);
+    };
     (parse_name_target: ($($args:tt)*)
                       | $var_name:ident for $target_path:path : $($rest:tt)*) =>
     {
@@ -511,7 +608,7 @@ macro_rules! static_hooks {
 
                 static_hooks!(make_detour: ($guard) ($var_name) ($($fn_mod)*) ($($arg_name)*) ($($arg_type)*) ($return_type));
 
-                $crate::StaticHook::__new(&__DATA, $target, __detour as $fn_type)
+                $crate::StaticHook::<$fn_type>::__new(&__DATA, $target, __detour)
             };
         }
     };
@@ -528,8 +625,8 @@ macro_rules! static_hooks {
 
                 static_hooks!(make_detour: ($guard) ($var_name) ($($fn_mod)*) ($($arg_name)*) ($($arg_type)*) ($return_type));
 
-                $crate::StaticHookWithDefault::__new(
-                    $crate::StaticHook::__new(&__DATA, $target, __detour as $fn_type),
+                $crate::StaticHookWithDefault::<$fn_type>::__new(
+                    $crate::StaticHook::__new(&__DATA, $target, __detour),
                     &$value)
             };
         }
@@ -596,6 +693,11 @@ macro_rules! static_hooks {
 mod tests {
     use std::mem;
     use std::sync::Mutex;
+    use std::ffi::OsStr;
+    use std::os::windows::ffi::OsStrExt;
+    use std::os::raw::c_int;
+
+    use {winapi, kernel32};
 
     use super::*;
 
@@ -615,6 +717,27 @@ mod tests {
         assert_eq!(f(5), 15);
         mem::drop(h);
         assert_eq!(f(5), 10);
+    }
+
+    #[test]
+    fn local_dynamic() {
+        extern "system" fn lstrlen_w_detour(_string: winapi::LPCWSTR) -> c_int {
+            -42
+        }
+
+        let foo = OsStr::new("foo").encode_wide().chain(Some(0)).collect::<Vec<_>>();
+        unsafe {
+            assert_eq!(kernel32::lstrlenW(foo.as_ptr()), 3);
+            let h =  Hook::<extern "system" fn(winapi::LPCWSTR) -> c_int>::new_api(
+                "kernel32.dll",
+                FunctionName::String("lstrlenW"),
+                lstrlen_w_detour).unwrap();
+            assert_eq!(kernel32::lstrlenW(foo.as_ptr()), 3);
+            h.enable().unwrap();
+            assert_eq!(kernel32::lstrlenW(foo.as_ptr()), -42);
+            h.disable().unwrap();
+            assert_eq!(kernel32::lstrlenW(foo.as_ptr()), 3);
+        }
     }
 
     #[test]
@@ -659,6 +782,24 @@ mod tests {
         assert_eq!(f(3, 66), 7);
         h.disable().unwrap();
         assert_eq!(f(3, 6), 9);
+    }
+
+    #[test]
+    fn static_dynamic() {
+        static_hooks! {
+            impl h for "lstrlenA" in "kernel32.dll": extern "system" fn(winapi::LPCSTR) -> c_int = |s| -h.call_real(s);
+        }
+
+        let foobar = b"foobar\0".as_ptr() as winapi::LPCSTR;
+        unsafe {
+            assert_eq!(kernel32::lstrlenA(foobar), 6);
+            h.initialize().unwrap();
+            assert_eq!(kernel32::lstrlenA(foobar), 6);
+            h.enable().unwrap();
+            assert_eq!(kernel32::lstrlenA(foobar), -6);
+            h.disable().unwrap();
+            assert_eq!(kernel32::lstrlenA(foobar), 6);
+        }
     }
 
     #[test]

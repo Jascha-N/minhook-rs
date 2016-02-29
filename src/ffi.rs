@@ -5,11 +5,9 @@
 //! reason to use this module directly.
 #![allow(dead_code)]
 
-extern crate winapi;
-
 use std::ptr;
 
-pub use self::winapi::{LPCSTR, LPCWSTR, LPVOID};
+pub use winapi::{LPCSTR, LPCWSTR, LPVOID};
 
 /// MinHook Error Codes.
 #[must_use]
