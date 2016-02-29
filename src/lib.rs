@@ -129,7 +129,7 @@ impl<T: Function> Hook<T> {
     /// can not be two function pointers with different signatures pointing to the same
     /// code location. This last situation can for example happen when the Rust compiler
     /// or LLVM decide to merge multiple functions with the same code into one.
-    pub unsafe fn new<D>(target: T, detour: D) -> Result<Hook<T>>
+    pub unsafe fn create<D>(target: T, detour: D) -> Result<Hook<T>>
     where T: HookableWith<D>, D: Function {
         initialize();
 
@@ -154,8 +154,8 @@ impl<T: Function> Hook<T> {
     ///
     /// The target module must remain loaded in memory for the entire duration of the hook.
     ///
-    /// See `new()` for more safety requirements.
-    pub unsafe fn new_api<M, N, D>(target_module: M, target_function: FunctionName<N>, detour: D) -> Result<Hook<T>>
+    /// See `create()` for more safety requirements.
+    pub unsafe fn create_api<M, N, D>(target_module: M, target_function: FunctionName<N>, detour: D) -> Result<Hook<T>>
     where M: AsRef<OsStr>, N: AsRef<OsStr>, T: HookableWith<D>, D: Function {
         fn str_to_wstring(string: &OsStr) -> Option<Vec<winapi::WCHAR>> {
             let mut wide = string.encode_wide().collect::<Vec<_>>();
@@ -275,9 +275,9 @@ impl<T: Function> StaticHook<T> {
 
     unsafe fn initialize_ref(&self, closure: &'static (Fn<T::Args, Output = T::Output> + Sync)) -> Result<()> {
         let hook = match self.target {
-            __StaticHookTarget::Static(target) => try!(Hook::new(target, self.detour)),
+            __StaticHookTarget::Static(target) => try!(Hook::create(target, self.detour)),
             __StaticHookTarget::Dynamic(module_name, function_name) =>
-                try!(Hook::new_api(module_name, FunctionName::String(function_name), self.detour))
+                try!(Hook::create_api(module_name, FunctionName::String(function_name), self.detour))
         };
 
         self.hook.initialize(__StaticHookInner(hook, closure)).map_err(|error| match error {
@@ -301,7 +301,8 @@ impl<T: Function> StaticHook<T> {
     ///
     /// # Safety
     ///
-    /// See documentation for [`Hook::new()`](struct.Hook.html#method.new).
+    /// See documentation for [`Hook::create()`](struct.Hook.html#method.create) and
+    /// [`Hook::create_api()`](struct.Hook.html#method.create_api)
     pub unsafe fn initialize<F>(&self, closure: F) -> Result<()>
     where F: Fn<T::Args, Output = T::Output> + Sync + 'static {
         self.initialize_box(Box::new(closure))
@@ -358,7 +359,8 @@ impl<T: Function> StaticHookWithDefault<T> {
     ///
     /// # Safety
     ///
-    /// See documentation for [`Hook::new()`](struct.Hook.html#method.new).
+    /// See documentation for [`Hook::create()`](struct.Hook.html#method.create) and
+    /// [`Hook::create_api()`](struct.Hook.html#method.create_api)
     pub unsafe fn initialize(&self) -> Result<()> {
         self.inner.initialize_ref(self.default)
     }
@@ -707,7 +709,7 @@ mod tests {
         fn d(x: i32) -> i32 { x * 3 }
 
         assert_eq!(f(5), 10);
-        let h = unsafe { Hook::<fn(i32) -> i32>::new(f, d).unwrap() };
+        let h = unsafe { Hook::<fn(i32) -> i32>::create(f, d).unwrap() };
         assert_eq!(f(5), 10);
         h.enable().unwrap();
         assert_eq!(f(5), 15);
@@ -728,7 +730,7 @@ mod tests {
         let foo = OsStr::new("foo").encode_wide().chain(Some(0)).collect::<Vec<_>>();
         unsafe {
             assert_eq!(kernel32::lstrlenW(foo.as_ptr()), 3);
-            let h =  Hook::<extern "system" fn(winapi::LPCWSTR) -> c_int>::new_api(
+            let h =  Hook::<extern "system" fn(winapi::LPCWSTR) -> c_int>::create_api(
                 "kernel32.dll",
                 FunctionName::String("lstrlenW"),
                 lstrlen_w_detour).unwrap();
@@ -826,9 +828,9 @@ mod tests {
         fn d3(x: i32) -> Option<u32> { Some(x.abs() as u32) }
 
         let (h1, h2, h3) = unsafe { (
-            Hook::<fn(&'static str) -> &'static str>::new(f1, d1).unwrap(),
-            Hook::<fn(i32) -> i32>::new(f2, d2).unwrap(),
-            Hook::<fn(i32) -> Option<u32>>::new(f3, d3).unwrap()
+            Hook::<fn(&'static str) -> &'static str>::create(f1, d1).unwrap(),
+            Hook::<fn(i32) -> i32>::create(f2, d2).unwrap(),
+            Hook::<fn(i32) -> Option<u32>>::create(f3, d3).unwrap()
         ) };
 
         HookQueue::new()
