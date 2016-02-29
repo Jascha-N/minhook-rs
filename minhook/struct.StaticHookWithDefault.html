@@ -46,14 +46,16 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-13206' class='srclink' href='../src/minhook/src/lib.rs.html#271-274' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-13247' class='srclink' href='../src/minhook/src/lib.rs.html#339-342' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct StaticHookWithDefault&lt;T: <a class='trait' href='../minhook/function/trait.Function.html' title='minhook::function::Function'>Function</a>&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A hook with a static lifetime and a default detour closure.</p>
 
-<p>This hook can only be constructed using the <code>static_hooks!</code> macro. It has the form:</p>
+<p>This hook can only be constructed using the <code>static_hooks!</code> macro. It has one of the
+following forms:</p>
 <pre class='rust rust-example-rendered'>
-<span class='attribute'>#[<span class='ident'>ATTR</span>]</span><span class='op'>*</span> <span class='kw'>pub</span>? <span class='kw'>impl</span> <span class='ident'>HOOK_VAR_NAME</span> <span class='kw'>for</span> <span class='ident'>PATH</span>::<span class='ident'>TO</span>::<span class='ident'>TARGET</span>: <span class='ident'>FN_TYPE</span> <span class='op'>=</span> <span class='ident'>CLOSURE_EXPR</span>;</pre>
+<span class='attribute'>#[<span class='ident'>ATTR</span>]</span><span class='op'>*</span> <span class='kw'>pub</span>? <span class='kw'>impl</span> <span class='ident'>HOOK_VAR_NAME</span> <span class='kw'>for</span> <span class='ident'>PATH</span>::<span class='ident'>TO</span>::<span class='ident'>TARGET</span>: <span class='ident'>FN_TYPE</span> <span class='op'>=</span> <span class='ident'>CLOSURE_EXPR</span>;
+<span class='attribute'>#[<span class='ident'>ATTR</span>]</span><span class='op'>*</span> <span class='kw'>pub</span>? <span class='kw'>impl</span> <span class='ident'>HOOK_VAR_NAME</span> <span class='kw'>for</span> <span class='string'>&quot;FUNCTION&quot;</span> <span class='kw'>in</span> <span class='string'>&quot;MODULE&quot;</span>: <span class='ident'>FN_TYPE</span> <span class='op'>=</span> <span class='ident'>CLOSURE_EXPR</span>;</pre>
 
 <p>Before accessing this hook it is <strong>required</strong> to call <code>initialize()</code> <strong>once</strong>. Accessing the
 hook before initializing or trying to initialize the hook twice (even after the first attempt

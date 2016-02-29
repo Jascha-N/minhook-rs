@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-13119' class='srclink' href='../src/minhook/src/lib.rs.html#97-100' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-13122' class='srclink' href='../src/minhook/src/lib.rs.html#103-106' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Hook&lt;T: <a class='trait' href='../minhook/function/trait.Function.html' title='minhook::function::Function'>Function</a>&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A hook that is destroyed when it goes out of scope.</p>
@@ -59,18 +59,22 @@ called. An invocation of the target function might for example get inlined in wh
 it is impossible to hook at runtime.</p>
 
 <h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
-<p>This function is unsafe because there are a few guarantees to be upheld by the caller
-that can not be checked:</p>
-
-<ul>
-<li>The target and detour function pointers must point to valid memory for the entire
-lifetime of this hook.</li>
-<li>The given target function type must uniquely match the actual target function. This
+<p>The given target function type must uniquely match the actual target function. This
 means two things: the given target function type has to be correct, but also there
 can not be two function pointers with different signatures pointing to the same
 code location. This last situation can for example happen when the Rust compiler
-or LLVM decide to merge multiple functions with the same code into one.</li>
-</ul>
+or LLVM decide to merge multiple functions with the same code into one.</p>
+</div><h4 id='method.new_api' class='method'><code>unsafe fn <a href='#method.new_api' class='fnname'>new_api</a>&lt;M, N, D&gt;(target_module: M, target_function: <a class='enum' href='../minhook/enum.FunctionName.html' title='minhook::FunctionName'>FunctionName</a>&lt;N&gt;, detour: D) -&gt; <a class='type' href='../minhook/type.Result.html' title='minhook::Result'>Result</a>&lt;<a class='struct' href='../minhook/struct.Hook.html' title='minhook::Hook'>Hook</a>&lt;T&gt;&gt; <span class='where'>where M: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsStr.html' title='std::ffi::os_str::OsStr'>OsStr</a>&gt;, N: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsStr.html' title='std::ffi::os_str::OsStr'>OsStr</a>&gt;, T: <a class='trait' href='../minhook/function/trait.HookableWith.html' title='minhook::function::HookableWith'>HookableWith</a>&lt;D&gt;, D: <a class='trait' href='../minhook/function/trait.Function.html' title='minhook::function::Function'>Function</a></span></code></h4>
+<div class='docblock'><p>Create a new hook given the name of the module, the name of the function symbol and a
+compatible detour function.</p>
+
+<p>The module has to be loaded before this function is called. This function does not
+attempt to load the module first. The hook is disabled by default.</p>
+
+<h1 id='safety-1' class='section-header'><a href='#safety-1'>Safety</a></h1>
+<p>The target module must remain loaded in memory for the entire duration of the hook.</p>
+
+<p>See <code>new()</code> for more safety requirements.</p>
 </div><h4 id='method.trampoline' class='method'><code>fn <a href='#method.trampoline' class='fnname'>trampoline</a>(&amp;self) -&gt; T::Unsafe</code></h4>
 <div class='docblock'><p>Returns an unsafe reference to the trampoline function.</p>
 

@@ -191,8 +191,6 @@
 <span id="148">148</span>
 <span id="149">149</span>
 <span id="150">150</span>
-<span id="151">151</span>
-<span id="152">152</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Raw bindings for the MinHook library.</span>
 <span class='doccomment'>//!</span>
@@ -201,11 +199,9 @@
 <span class='doccomment'>//! reason to use this module directly.</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>dead_code</span>)]</span>
 
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>winapi</span>;
-
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ptr</span>;
 
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>winapi</span>::{<span class='ident'>LPCSTR</span>, <span class='ident'>LPCWSTR</span>, <span class='ident'>LPVOID</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>winapi</span>::{<span class='ident'>LPCSTR</span>, <span class='ident'>LPCWSTR</span>, <span class='ident'>LPVOID</span>};
 
 <span class='doccomment'>/// MinHook Error Codes.</span>
 <span class='attribute'>#[<span class='ident'>must_use</span>]</span>

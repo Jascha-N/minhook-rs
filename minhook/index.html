@@ -46,11 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/minhook/src/lib.rs.html#1-705' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-0' class='srclink' href='../src/minhook/src/lib.rs.html#1-846' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'>
 <h1 id='the-minhook-rs-library' class='section-header'><a href='#the-minhook-rs-library'>The minhook-rs library</a></h1>
 <p>This library provides function hooking support to Rust by providing a
-Rust wrapper around the <a href="http://www.codeproject.com/KB/winsdk/LibMinHook.aspx">MinHook</a> library.</p>
+wrapper around the <a href="http://www.codeproject.com/KB/winsdk/LibMinHook.aspx">MinHook</a> library.</p>
 </div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
                     <tr class=' module-item'>
@@ -74,7 +74,7 @@ Rust wrapper around the <a href="http://www.codeproject.com/KB/winsdk/LibMinHook
                         <td><a class='macro' href='macro.static_hooks!.html'
                                title='minhook::static_hooks!'>static_hooks!</a></td>
                         <td class='docblock short'>
-                             <p>Declares one or more thread-safe static hooks.</p>
+                             <p>Defines one or more static hooks.</p>
                         </td>
                     </tr>
                 </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
@@ -117,6 +117,14 @@ Rust wrapper around the <a href="http://www.codeproject.com/KB/winsdk/LibMinHook
                                title='minhook::Error'>Error</a></td>
                         <td class='docblock short'>
                              <p>The error type for all hooking operations.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.FunctionName.html'
+                               title='minhook::FunctionName'>FunctionName</a></td>
+                        <td class='docblock short'>
+                             <p>A function name used for dynamically hooking a function.</p>
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>

@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `HookQueue` struct in crate `minhook`.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, HookQueue">
+    <meta name="description" content="API documentation for the Rust `FunctionName` enum in crate `minhook`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, FunctionName">
 
-    <title>minhook::HookQueue - Rust</title>
+    <title>minhook::FunctionName - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
@@ -27,7 +27,7 @@
 
     <nav class="sidebar">
         
-        <p class='location'><a href='index.html'>minhook</a></p><script>window.sidebarCurrent = {name: 'HookQueue', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+        <p class='location'><a href='index.html'>minhook</a></p><script>window.sidebarCurrent = {name: 'FunctionName', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
     <nav class="sub">
@@ -41,22 +41,21 @@
         </form>
     </nav>
 
-    <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>minhook</a>::<wbr><a class='struct' href=''>HookQueue</a></span><span class='out-of-band'><span id='render-detail'>
+    <section id='main' class="content enum">
+<h1 class='fqn'><span class='in-band'>Enum <a href='index.html'>minhook</a>::<wbr><a class='enum' href=''>FunctionName</a></span><span class='out-of-band'><span id='render-detail'>
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-13101' class='srclink' href='../src/minhook/src/lib.rs.html#60' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct HookQueue(_);</pre><div class='docblock'><p>A queue of hook changes to be applied at once.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../minhook/struct.HookQueue.html' title='minhook::HookQueue'>HookQueue</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../minhook/struct.HookQueue.html' title='minhook::HookQueue'>HookQueue</a></code></h4>
-<div class='docblock'><p>Create a new empty queue.</p>
-</div><h4 id='method.enable' class='method'><code>fn <a href='#method.enable' class='fnname'>enable</a>&lt;T: <a class='trait' href='../minhook/function/trait.Function.html' title='minhook::function::Function'>Function</a>&gt;(&amp;mut self, hook: &amp;<a class='struct' href='../minhook/struct.Hook.html' title='minhook::Hook'>Hook</a>&lt;T&gt;) -&gt; &amp;mut <a class='struct' href='../minhook/struct.HookQueue.html' title='minhook::HookQueue'>HookQueue</a></code></h4>
-<div class='docblock'><p>Queue the given hook to be enabled.</p>
-</div><h4 id='method.disable' class='method'><code>fn <a href='#method.disable' class='fnname'>disable</a>&lt;T: <a class='trait' href='../minhook/function/trait.Function.html' title='minhook::function::Function'>Function</a>&gt;(&amp;mut self, hook: &amp;<a class='struct' href='../minhook/struct.Hook.html' title='minhook::Hook'>Hook</a>&lt;T&gt;) -&gt; &amp;mut <a class='struct' href='../minhook/struct.HookQueue.html' title='minhook::HookQueue'>HookQueue</a></code></h4>
-<div class='docblock'><p>Queue the given hook to be disabled.</p>
-</div><h4 id='method.apply' class='method'><code>fn <a href='#method.apply' class='fnname'>apply</a>(&amp;mut self) -&gt; <a class='type' href='../minhook/type.Result.html' title='minhook::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
-<div class='docblock'><p>Applies all the changes in this queue at once.</p>
-</div></div></section>
+        </span><a id='src-13134' class='srclink' href='../src/minhook/src/lib.rs.html#110-115' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum FunctionName&lt;S: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsStr.html' title='std::ffi::os_str::OsStr'>OsStr</a>&gt;&gt; {
+    Ordinal(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>),
+    String(S),
+}</pre><div class='docblock'><p>A function name used for dynamically hooking a function.</p>
+</div><h2 class='variants'>Variants</h2>
+<table class='variants_table'><tr><td id='variant.Ordinal'><code>Ordinal</code></td><td><div class='docblock'><p>The function&#39;s ordinal value.</p>
+</div></td><td></td></tr><tr><td id='variant.String'><code>String</code></td><td><div class='docblock'><p>The function&#39;s name.</p>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl&lt;S: <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsStr.html' title='std::ffi::os_str::OsStr'>OsStr</a>&gt;&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../minhook/enum.FunctionName.html' title='minhook::FunctionName'>FunctionName</a>&lt;S&gt;</code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

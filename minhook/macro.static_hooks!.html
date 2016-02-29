@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-13260' class='srclink' href='../src/minhook/src/lib.rs.html#368-591' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-13301' class='srclink' href='../src/minhook/src/lib.rs.html#465-688' title='goto source code'>[src]</a></span></h1>
 <pre class='rust macro'>
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>static_hooks</span> {
     (<span class='ident'>parse_attr</span>: ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>args</span>:<span class='ident'>tt</span>)<span class='op'>*</span>)
@@ -57,6 +57,8 @@
               <span class='op'>|</span> <span class='kw'>impl</span> $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>rest</span>:<span class='ident'>tt</span>)<span class='op'>*</span>) <span class='op'>=&gt;</span> { ... };
     (<span class='ident'>parse_mod</span>: ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>args</span>:<span class='ident'>tt</span>)<span class='op'>*</span>)
               <span class='op'>|</span> $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>rest</span>:<span class='ident'>tt</span>)<span class='op'>*</span>) <span class='op'>=&gt;</span> { ... };
+    (<span class='ident'>parse_name_target</span>: ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>args</span>:<span class='ident'>tt</span>)<span class='op'>*</span>)
+                      <span class='op'>|</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>var_name</span>:<span class='ident'>ident</span> <span class='kw'>for</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target_fn_name</span>:<span class='ident'>tt</span> <span class='kw'>in</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target_mod_name</span>:<span class='ident'>tt</span> : $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>rest</span>:<span class='ident'>tt</span>)<span class='op'>*</span>) <span class='op'>=&gt;</span> { ... };
     (<span class='ident'>parse_name_target</span>: ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>args</span>:<span class='ident'>tt</span>)<span class='op'>*</span>)
                       <span class='op'>|</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>var_name</span>:<span class='ident'>ident</span> <span class='kw'>for</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target_path</span>:<span class='ident'>path</span> : $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>rest</span>:<span class='ident'>tt</span>)<span class='op'>*</span>) <span class='op'>=&gt;</span> { ... };
     (<span class='ident'>parse_fn_unsafe</span>: ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>args</span>:<span class='ident'>tt</span>)<span class='op'>*</span>)
@@ -99,12 +101,41 @@
     (<span class='ident'>gen_arg_names</span>: (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>label</span>:<span class='ident'>ident</span>) ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>args</span>:<span class='ident'>tt</span>)<span class='op'>*</span>) ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>:<span class='ident'>tt</span>)<span class='op'>*</span>) () ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>acc</span>:<span class='ident'>tt</span>)<span class='op'>*</span>)) <span class='op'>=&gt;</span> { ... };
     ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span>:<span class='ident'>tt</span>)<span class='op'>+</span>) <span class='op'>=&gt;</span> { ... };
 }</pre>
-<div class='docblock'><p>Declares one or more thread-safe static hooks.</p>
+<div class='docblock'><p>Defines one or more static hooks.</p>
 
-<p>The syntax for these hooks is:</p>
+<p>A <code>static_hooks!</code> block can contain one or more hook definitions of the following forms:</p>
 <pre class='rust rust-example-rendered'>
-<span class='attribute'>#[<span class='ident'>ATTR</span>]</span><span class='op'>*</span> <span class='kw'>pub</span>? <span class='kw'>impl</span> <span class='ident'>HOOK_VAR_NAME</span> <span class='kw'>for</span> <span class='ident'>PATH</span>::<span class='ident'>TO</span>::<span class='ident'>TARGET</span>: <span class='ident'>FN_TYPE</span> <span class='op'>=</span> <span class='ident'>CLOSURE_EXPR</span>;
-<span class='attribute'>#[<span class='ident'>ATTR</span>]</span><span class='op'>*</span> <span class='kw'>pub</span>? <span class='kw'>impl</span> <span class='ident'>HOOK_VAR_NAME</span> <span class='kw'>for</span> <span class='ident'>PATH</span>::<span class='ident'>TO</span>::<span class='ident'>TARGET</span>: <span class='ident'>FN_TYPE</span>;</pre>
+<span class='comment'>// Creates a `StaticHookWithDefault`</span>
+<span class='attribute'>#[<span class='ident'>ATTR</span>]</span><span class='op'>*</span> <span class='kw'>pub</span>? <span class='kw'>impl</span> <span class='ident'>HOOK_VAR_NAME</span> <span class='kw'>for</span> <span class='ident'>PATH</span>::<span class='ident'>TO</span>::<span class='ident'>TARGET</span>: <span class='ident'>FN_TYPE</span> <span class='op'>=</span> <span class='ident'>FN_EXPR</span>;
+<span class='attribute'>#[<span class='ident'>ATTR</span>]</span><span class='op'>*</span> <span class='kw'>pub</span>? <span class='kw'>impl</span> <span class='ident'>HOOK_VAR_NAME</span> <span class='kw'>for</span> <span class='string'>&quot;FUNCTION&quot;</span> <span class='kw'>in</span> <span class='string'>&quot;MODULE&quot;</span>: <span class='ident'>FN_TYPE</span> <span class='op'>=</span> <span class='ident'>FN_EXPR</span>;
+
+<span class='comment'>// Creates a `StaticHook`</span>
+<span class='attribute'>#[<span class='ident'>ATTR</span>]</span><span class='op'>*</span> <span class='kw'>pub</span>? <span class='kw'>impl</span> <span class='ident'>HOOK_VAR_NAME</span> <span class='kw'>for</span> <span class='ident'>PATH</span>::<span class='ident'>TO</span>::<span class='ident'>TARGET</span>: <span class='ident'>FN_TYPE</span>;
+<span class='attribute'>#[<span class='ident'>ATTR</span>]</span><span class='op'>*</span> <span class='kw'>pub</span>? <span class='kw'>impl</span> <span class='ident'>HOOK_VAR_NAME</span> <span class='kw'>for</span> <span class='string'>&quot;FUNCTION&quot;</span> <span class='kw'>in</span> <span class='string'>&quot;MODULE&quot;</span>: <span class='ident'>FN_TYPE</span>;</pre>
+
+<p>All of the above definitions create a static variable with the specified name of
+type <code>StaticHook</code> or <code>StaticHookWithDefault</code> for a target function of the given
+type. If the function signature contains <code>extern</code>, any panics that happen inside of the
+detour <code>Fn</code> are automatically caught before they can propagate across foreign code boundaries.
+See the <code>panic</code> submodule for more information.</p>
+
+<p>The first two forms create a static hook with a default detour <code>Fn</code>. This is useful if
+the detour <code>Fn</code> is a closure that does not need to capture any local variables
+or if the detour <code>Fn</code> is just a normal function. See <code>StaticHookWithDefault</code>.</p>
+
+<p>The last two forms require a <code>Fn</code> to be supplied at the time of initialization of the
+static hook. In this case a closure that captures local variables can be supplied.
+See <code>StaticHook</code>.</p>
+
+<p>The first and third forms are used for hooking functions by their compile-time identifier.</p>
+
+<p>The second and fourth form will try to find the target function by name at initialization
+instead of at compile time. These forms require the exported function symbol name and
+its containing module&#39;s name to be supplied.</p>
+
+<p>The optional <code>pub</code> keyword can be used to give the resulting hook variable public
+visibility. Any attributes used on a hook definition will be applied to the resulting
+hook variable.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 
