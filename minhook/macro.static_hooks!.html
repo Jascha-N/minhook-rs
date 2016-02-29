@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-13301' class='srclink' href='../src/minhook/src/lib.rs.html#465-688' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-13301' class='srclink' href='../src/minhook/src/lib.rs.html#467-690' title='goto source code'>[src]</a></span></h1>
 <pre class='rust macro'>
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>static_hooks</span> {
     (<span class='ident'>parse_attr</span>: ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>args</span>:<span class='ident'>tt</span>)<span class='op'>*</span>)
@@ -104,6 +104,7 @@
 <div class='docblock'><p>Defines one or more static hooks.</p>
 
 <p>A <code>static_hooks!</code> block can contain one or more hook definitions of the following forms:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='comment'>// Creates a `StaticHookWithDefault`</span>
 <span class='attribute'>#[<span class='ident'>ATTR</span>]</span><span class='op'>*</span> <span class='kw'>pub</span>? <span class='kw'>impl</span> <span class='ident'>HOOK_VAR_NAME</span> <span class='kw'>for</span> <span class='ident'>PATH</span>::<span class='ident'>TO</span>::<span class='ident'>TARGET</span>: <span class='ident'>FN_TYPE</span> <span class='op'>=</span> <span class='ident'>FN_EXPR</span>;

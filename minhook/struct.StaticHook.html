@@ -53,6 +53,7 @@
 
 <p>This hook can only be constructed using the <code>static_hooks!</code> macro. It has one of the
 following forms:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='attribute'>#[<span class='ident'>ATTR</span>]</span><span class='op'>*</span> <span class='kw'>pub</span>? <span class='kw'>impl</span> <span class='ident'>HOOK_VAR_NAME</span> <span class='kw'>for</span> <span class='ident'>PATH</span>::<span class='ident'>TO</span>::<span class='ident'>TARGET</span>: <span class='ident'>FN_TYPE</span>;
 <span class='attribute'>#[<span class='ident'>ATTR</span>]</span><span class='op'>*</span> <span class='kw'>pub</span>? <span class='kw'>impl</span> <span class='ident'>HOOK_VAR_NAME</span> <span class='kw'>for</span> <span class='string'>&quot;FUNCTION&quot;</span> <span class='kw'>in</span> <span class='string'>&quot;MODULE&quot;</span>: <span class='ident'>FN_TYPE</span>;</pre>
@@ -69,7 +70,8 @@ failed) will result in a panic.</p>
 <p>Panics if the hook was accessed or initialized before this call.</p>
 
 <h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
-<p>See documentation for <a href="struct.Hook.html#method.new"><code>Hook::new()</code></a>.</p>
+<p>See documentation for <a href="struct.Hook.html#method.create"><code>Hook::create()</code></a> and
+<a href="struct.Hook.html#method.create_api"><code>Hook::create_api()</code></a></p>
 </div></div><h2 id='deref-methods'>Methods from <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Deref.html' title='core::ops::Deref'>Deref</a>&lt;Target=<a class='struct' href='../minhook/struct.Hook.html' title='minhook::Hook'>Hook</a>&lt;T&gt;&gt;</h2><div class='impl-items'><h4 id='method.trampoline-1' class='method'><code>fn <a href='#method.trampoline' class='fnname'>trampoline</a>(&amp;self) -&gt; T::Unsafe</code></h4>
 <div class='docblock'><p>Returns an unsafe reference to the trampoline function.</p>
 
