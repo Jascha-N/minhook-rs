@@ -1,63 +1,36 @@
+use std::{mem, ptr};
 use std::cell::UnsafeCell;
-use std::sync::{Once, StaticRwLock};
-
-#[derive(Copy, PartialEq, Eq, Clone, Debug)]
-pub enum Error {
-    AlreadyInitialized,
-    AccessedBeforeInitialization
-}
+use std::sync::StaticRwLock;
+use std::sync::atomic::{AtomicPtr, Ordering};
 
 #[doc(hidden)]
-pub struct StaticInitCell<T> {
-    data: UnsafeCell<Option<T>>,
-    once: Once,
-}
+pub struct AtomicInitCell<T>(AtomicPtr<T>);
 
-impl<T> StaticInitCell<T> {
+impl<T> AtomicInitCell<T> {
     #[doc(hidden)]
-    pub const fn new() -> StaticInitCell<T> {
-        StaticInitCell {
-            data: UnsafeCell::new(None),
-            once: Once::new()
+    pub const fn new() -> AtomicInitCell<T> {
+        AtomicInitCell(AtomicPtr::new(ptr::null_mut()))
+    }
+
+    #[doc(hidden)]
+    pub fn initialize(&self, value: T) -> Result<(), ()> {
+        let mut boxed = Box::new(value);
+        if !self.0.compare_and_swap(ptr::null_mut(), &mut *boxed, Ordering::SeqCst).is_null() {
+            return Err(());
         }
-    }
-
-    unsafe fn set_unsync(&self, value: T) {
-        *self.data.get() = Some(value)
-    }
-
-    unsafe fn get_ref_unsync(&self) -> Option<&T> {
-        (*self.data.get()).as_ref()
+        mem::forget(boxed);
+        Ok(())
     }
 
     #[doc(hidden)]
-    pub fn initialize(&'static self, value: T) -> Result<(), Error> {
-        let mut first = false;
-
-        self.once.call_once(|| unsafe {
-            self.set_unsync(value);
-            first = true;
-        });
-
-        if first {
-            Ok(())
-        } else {
-            unsafe {
-                self.get_ref_unsync().ok_or(Error::AccessedBeforeInitialization)
-                                     .and_then(|_| Err(Error::AlreadyInitialized))
-            }
+    pub fn get(&self) -> Option<&'static T> {
+        let data = self.0.load(Ordering::SeqCst);
+        if data.is_null() {
+            return None;
         }
-    }
-
-    #[doc(hidden)]
-    pub fn get(&'static self) -> Result<&'static T, Error> {
-        self.once.call_once(|| ());
-
-        unsafe { self.get_ref_unsync().ok_or(Error::AccessedBeforeInitialization) }
+        unsafe { Some(&*data) }
     }
 }
-
-unsafe impl<T: Sync> Sync for StaticInitCell<T> {}
 
 
 

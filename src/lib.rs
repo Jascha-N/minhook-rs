@@ -24,10 +24,9 @@ use std::sync::{Once, StaticMutex};
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 
-use cell::Error as CellError;
 use function::{Function, FnPointer, HookableWith};
 
-pub use cell::StaticInitCell;
+pub use cell::AtomicInitCell;
 pub use error::Error;
 
 mod cell;
@@ -253,14 +252,14 @@ unsafe impl<T: Function> Send for Hook<T> {}
 /// hook before initializing or trying to initialize the hook twice (even after the first attempt
 /// failed) will result in a panic.
 pub struct StaticHook<T: Function> {
-    hook: &'static StaticInitCell<__StaticHookInner<T>>,
+    hook: &'static AtomicInitCell<__StaticHookInner<T>>,
     target: __StaticHookTarget<T>,
     detour: T
 }
 
 impl<T: Function> StaticHook<T> {
     #[doc(hidden)]
-    pub const fn __new(hook: &'static StaticInitCell<__StaticHookInner<T>>, target: __StaticHookTarget<T>, detour: T) -> StaticHook<T> {
+    pub const fn __new(hook: &'static AtomicInitCell<__StaticHookInner<T>>, target: __StaticHookTarget<T>, detour: T) -> StaticHook<T> {
         StaticHook {
             hook: hook,
             target: target,
@@ -280,10 +279,7 @@ impl<T: Function> StaticHook<T> {
                 try!(Hook::create_api(module_name, FunctionName::String(function_name), self.detour))
         };
 
-        self.hook.initialize(__StaticHookInner(hook, closure)).map_err(|error| match error {
-            CellError::AlreadyInitialized => Error::AlreadyCreated,
-            CellError::AccessedBeforeInitialization => panic!("attempt to initialize static hook that was already accessed")
-        })
+        self.hook.initialize(__StaticHookInner(hook, closure)).map_err(|_| Error::AlreadyCreated)
     }
 
     unsafe fn initialize_box(&self, closure: Box<Fn<T::Args, Output = T::Output> + Sync>) -> Result<()> {
@@ -583,7 +579,7 @@ macro_rules! static_hooks {
             #[allow(non_upper_case_globals)]
             $(#[$var_attr])*
             $($var_mod)* static $var_name: $crate::StaticHook<$fn_type> = {
-                static __DATA: $crate::StaticInitCell<$crate::__StaticHookInner<$fn_type>> = $crate::StaticInitCell::new();
+                static __DATA: $crate::AtomicInitCell<$crate::__StaticHookInner<$fn_type>> = $crate::AtomicInitCell::new();
 
                 static_hooks!(make_detour: ($guard) ($var_name) ($($fn_mod)*) ($($arg_name)*) ($($arg_type)*) ($return_type));
 
@@ -600,7 +596,7 @@ macro_rules! static_hooks {
             #[allow(non_upper_case_globals)]
             $(#[$var_attr])*
             $($var_mod)* static $var_name: $crate::StaticHookWithDefault<$fn_type> = {
-                static __DATA: $crate::StaticInitCell<$crate::__StaticHookInner<$fn_type>> = $crate::StaticInitCell::new();
+                static __DATA: $crate::AtomicInitCell<$crate::__StaticHookInner<$fn_type>> = $crate::AtomicInitCell::new();
 
                 static_hooks!(make_detour: ($guard) ($var_name) ($($fn_mod)*) ($($arg_name)*) ($($arg_type)*) ($return_type));
 
