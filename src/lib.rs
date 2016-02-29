@@ -26,10 +26,10 @@ use std::os::windows::ffi::OsStrExt;
 
 use function::{Function, FnPointer, HookableWith};
 
-pub use cell::AtomicInitCell;
+pub use sync::AtomicInitCell;
 pub use error::Error;
 
-mod cell;
+mod sync;
 mod error;
 mod ffi;
 

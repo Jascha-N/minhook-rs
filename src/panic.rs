@@ -5,7 +5,7 @@ use std::any::Any;
 use std::io::{self, Write};
 use std::panic::{self, AssertRecoverSafe};
 
-use cell::StaticRwCell;
+use sync::StaticRwCell;
 
 
 
