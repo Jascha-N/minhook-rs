@@ -4,7 +4,6 @@
 //!
 //! [minhook]: http://www.codeproject.com/KB/winsdk/LibMinHook.aspx
 #![feature(on_unimplemented,
-           static_recursion,
            static_mutex,
            static_rwlock,
            const_fn,
@@ -13,6 +12,7 @@
            associated_consts,
            unboxed_closures,
            core_intrinsics)]
+#![cfg_attr(test, feature(static_recursion))]
 #![warn(missing_docs)]
 
 extern crate winapi;
