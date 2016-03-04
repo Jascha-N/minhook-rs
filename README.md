@@ -9,7 +9,7 @@ A function hooking library for the Rust programming language. This library provi
 
 It currently supports the x86 and x86_64 architectures and the GCC (MinGW) and MSVC toolchains on Windows. Requires the Rust Nightly compiler.
 The supported target triples are:
-- `i686-pc-windows-msvc` (untested, because unwinding is broken)
+- `i686-pc-windows-msvc`
 - `x86_64-pc-windows-msvc`
 - `i686-pc-windows-gnu`
 - `x86_64-pc-windows-gnu`

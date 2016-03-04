@@ -4,8 +4,8 @@ branches:
 
 environment:
   matrix:
-#  - TARGET: i686-pc-windows-msvc
-#    MSVC_ARCH: x86
+  - TARGET: i686-pc-windows-msvc
+    MSVC_ARCH: x86
   - TARGET: x86_64-pc-windows-msvc
     MSVC_ARCH: amd64
   - TARGET: i686-pc-windows-gnu
