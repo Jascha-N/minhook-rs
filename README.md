@@ -37,6 +37,17 @@ The minhook-rs library has the following feature:
 
 Example using a static hook.
 
+`Cargo.toml:`
+
+```toml
+[dependencies]
+minhook = { git = "https://github.com/Jascha-N/minhook-rs" }
+winapi = "0.2"
+user32-sys = "0.1"
+```
+
+`src/main.rs:`
+
 ```rust
 #![feature(const_fn, recover)]
 
