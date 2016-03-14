@@ -14,13 +14,13 @@ fn main() {
     let sys  = parts[2];
 
     if sys != "windows" {
-        panic!("Platform `{}` not supported.", sys);
+        panic!("Platform '{}' not supported.", sys);
     }
 
-    let hde_suffix = match arch {
-        "i686"   => "32",
-        "x86_64" => "64",
-        _        => panic!("Architecture `{}` not supported.", arch)
+    let hde = match arch {
+        "i686"   => "HDE/hde32.c",
+        "x86_64" => "HDE/hde64.c",
+        _        => panic!("Architecture '{}' not supported.", arch)
     };
 
     let src_dir = Path::new(&root_dir).join("src/minhook/src");
@@ -29,6 +29,8 @@ fn main() {
            .file(src_dir.join("buffer.c"))
            .file(src_dir.join("hook.c"))
            .file(src_dir.join("trampoline.c"))
-           .file(src_dir.join(format!("HDE/hde{}.c", hde_suffix)))
+           .file(src_dir.join(hde))
            .compile("libminhook.a");
+
+    println!("cargo:rerun-if-changed=src/minhook/src/");
 }
