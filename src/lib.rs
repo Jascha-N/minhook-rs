@@ -104,15 +104,6 @@ pub struct Hook<T: Function> {
     trampoline: T
 }
 
-/// A function name used for dynamically hooking a function.
-#[derive(Debug)]
-pub enum FunctionName<S: AsRef<OsStr>> {
-    /// The function's ordinal value.
-    Ordinal(u16),
-    /// The function's name.
-    String(S)
-}
-
 impl<T: Function> Hook<T> {
     /// Create a new hook given a target function and a compatible detour function.
     ///
@@ -154,8 +145,8 @@ impl<T: Function> Hook<T> {
     /// The target module must remain loaded in memory for the entire duration of the hook.
     ///
     /// See `create()` for more safety requirements.
-    pub unsafe fn create_api<M, N, D>(target_module: M, target_function: FunctionName<N>, detour: D) -> Result<Hook<T>>
-    where M: AsRef<OsStr>, N: AsRef<OsStr>, T: HookableWith<D>, D: Function {
+    pub unsafe fn create_api<'a, M, D>(target_module: M, target_function: FunctionId<'a>, detour: D) -> Result<Hook<T>>
+    where M: AsRef<OsStr>, T: HookableWith<D>, D: Function {
         fn str_to_wstring(string: &OsStr) -> Option<Vec<winapi::WCHAR>> {
             let mut wide = string.encode_wide().collect::<Vec<_>>();
             if wide.contains(&0) {
@@ -170,9 +161,9 @@ impl<T: Function> Hook<T> {
         let module_name = try!(str_to_wstring(target_module.as_ref()).ok_or(Error::InvalidModuleName));
 
         let (function_name, _data) = match target_function {
-            FunctionName::Ordinal(ord) => (ord as winapi::LPCSTR, Vec::new()),
-            FunctionName::String(name) => {
-                let symbol_name_wide = try!(str_to_wstring(name.as_ref()).ok_or(Error::InvalidFunctionName));
+            FunctionId::Ordinal(ord) => (ord as winapi::LPCSTR, Vec::new()),
+            FunctionId::Name(name) => {
+                let symbol_name_wide = try!(str_to_wstring(name).ok_or(Error::InvalidFunctionName));
 
                 let size = kernel32::WideCharToMultiByte(winapi::CP_ACP, 0, symbol_name_wide.as_ptr(), -1, ptr::null_mut(), 0, ptr::null(), ptr::null_mut());
                 if size == 0 {
@@ -238,6 +229,28 @@ unsafe impl<T: Function> Send for Hook<T> {}
 
 
 
+/// A function identifier used for dynamically looking up a function.
+#[derive(Debug)]
+pub enum FunctionId<'a> {
+    /// The function's ordinal value.
+    Ordinal(u16),
+    /// The function's name.
+    Name(&'a OsStr)
+}
+
+impl<'a> FunctionId<'a> {
+    /// Create a function identifier given it's ordinal value.
+    pub fn ordinal(value: u16) -> FunctionId<'static> {
+        FunctionId::Ordinal(value)
+    }
+
+    /// Create a function identifier given it's string name.
+    pub fn name<N: ?Sized + AsRef<OsStr> + 'a>(name: &'a N) -> FunctionId<'a> {
+        FunctionId::Name(name.as_ref())
+    }
+}
+
+
 /// A hook with a static lifetime.
 ///
 /// This hook can only be constructed using the `static_hooks!` macro. It has one of the
@@ -276,7 +289,7 @@ impl<T: Function> StaticHook<T> {
         let hook = match self.target {
             __StaticHookTarget::Static(target) => try!(Hook::create(target, self.detour)),
             __StaticHookTarget::Dynamic(module_name, function_name) =>
-                try!(Hook::create_api(module_name, FunctionName::String(function_name), self.detour))
+                try!(Hook::create_api(module_name, FunctionId::name(function_name), self.detour))
         };
 
         self.hook.initialize(__StaticHookInner(hook, closure)).map_err(|_| Error::AlreadyCreated)
@@ -705,7 +718,7 @@ mod tests {
             assert_eq!(kernel32::lstrlenW(foo.as_ptr()), 3);
             let h =  Hook::<extern "system" fn(winapi::LPCWSTR) -> c_int>::create_api(
                 "kernel32.dll",
-                FunctionName::String("lstrlenW"),
+                FunctionId::name("lstrlenW"),
                 lstrlen_w_detour).unwrap();
             assert_eq!(kernel32::lstrlenW(foo.as_ptr()), 3);
             h.enable().unwrap();
