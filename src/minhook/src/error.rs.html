@@ -242,25 +242,25 @@
 <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>Error</span> {
     <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>fmt</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
          <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>fmt</span>, <span class='string'>&quot;{}&quot;</span>, <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Error</span>::<span class='ident'>AlreadyInitialized</span> <span class='op'>=&gt;</span> <span class='string'>&quot;MinHook is already initialized.&quot;</span>,
-            <span class='ident'>Error</span>::<span class='ident'>NotInitialized</span> <span class='op'>=&gt;</span> <span class='string'>&quot;MinHook is not initialized yet, or already uninitialized.&quot;</span>,
+            <span class='ident'>Error</span>::<span class='ident'>AlreadyInitialized</span> <span class='op'>=&gt;</span> <span class='string'>&quot;MinHook is already initialized&quot;</span>,
+            <span class='ident'>Error</span>::<span class='ident'>NotInitialized</span> <span class='op'>=&gt;</span> <span class='string'>&quot;MinHook is not initialized yet, or already uninitialized&quot;</span>,
             <span class='ident'>Error</span>::<span class='ident'>AlreadyCreated</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The hook for the specified target function is already \
-                                      created.&quot;</span>,
-            <span class='ident'>Error</span>::<span class='ident'>NotCreated</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The hook for the specified target function is not created yet.&quot;</span>,
+                                      created&quot;</span>,
+            <span class='ident'>Error</span>::<span class='ident'>NotCreated</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The hook for the specified target function is not created yet&quot;</span>,
             <span class='ident'>Error</span>::<span class='ident'>AlreadyEnabled</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The hook for the specified target function is already \
-                                      enabled.&quot;</span>,
+                                      enabled&quot;</span>,
             <span class='ident'>Error</span>::<span class='ident'>Disabled</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The hook for the specified target function is not enabled yet, or \
-                                already disabled.&quot;</span>,
-            <span class='ident'>Error</span>::<span class='ident'>NotExecutable</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The specified pointer is invalid. It points the address of \
-                                     non-allocated and/or non-executable region.&quot;</span>,
-            <span class='ident'>Error</span>::<span class='ident'>UnsupportedFunction</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The specified target function cannot be hooked.&quot;</span>,
-            <span class='ident'>Error</span>::<span class='ident'>MemoryAlloc</span> <span class='op'>=&gt;</span> <span class='string'>&quot;Failed to allocate memory.&quot;</span>,
-            <span class='ident'>Error</span>::<span class='ident'>MemoryProtect</span> <span class='op'>=&gt;</span> <span class='string'>&quot;Failed to change the memory protection.&quot;</span>,
-            <span class='ident'>Error</span>::<span class='ident'>ModuleNotFound</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The specified module is not loaded.&quot;</span>,
-            <span class='ident'>Error</span>::<span class='ident'>FunctionNotFound</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The specified function is not found.&quot;</span>,
+                                already disabled&quot;</span>,
+            <span class='ident'>Error</span>::<span class='ident'>NotExecutable</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The specified pointer is invalid; it points the address of \
+                                     non-allocated and/or non-executable region&quot;</span>,
+            <span class='ident'>Error</span>::<span class='ident'>UnsupportedFunction</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The specified target function cannot be hooked&quot;</span>,
+            <span class='ident'>Error</span>::<span class='ident'>MemoryAlloc</span> <span class='op'>=&gt;</span> <span class='string'>&quot;Failed to allocate memory&quot;</span>,
+            <span class='ident'>Error</span>::<span class='ident'>MemoryProtect</span> <span class='op'>=&gt;</span> <span class='string'>&quot;Failed to change the memory protection&quot;</span>,
+            <span class='ident'>Error</span>::<span class='ident'>ModuleNotFound</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The specified module is not loaded&quot;</span>,
+            <span class='ident'>Error</span>::<span class='ident'>FunctionNotFound</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The specified function is not found&quot;</span>,
 
-            <span class='ident'>Error</span>::<span class='ident'>InvalidModuleName</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The specified module name is invalid.&quot;</span>,
-            <span class='ident'>Error</span>::<span class='ident'>InvalidFunctionName</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The specified function name is invalid.&quot;</span>
+            <span class='ident'>Error</span>::<span class='ident'>InvalidModuleName</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The specified module name is invalid&quot;</span>,
+            <span class='ident'>Error</span>::<span class='ident'>InvalidFunctionName</span> <span class='op'>=&gt;</span> <span class='string'>&quot;The specified function name is invalid&quot;</span>
         })
     }
 }</pre>
