@@ -87,25 +87,25 @@ impl error::Error for Error {
 impl fmt::Display for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
          write!(fmt, "{}", match *self {
-            Error::AlreadyInitialized => "MinHook is already initialized.",
-            Error::NotInitialized => "MinHook is not initialized yet, or already uninitialized.",
+            Error::AlreadyInitialized => "MinHook is already initialized",
+            Error::NotInitialized => "MinHook is not initialized yet, or already uninitialized",
             Error::AlreadyCreated => "The hook for the specified target function is already \
-                                      created.",
-            Error::NotCreated => "The hook for the specified target function is not created yet.",
+                                      created",
+            Error::NotCreated => "The hook for the specified target function is not created yet",
             Error::AlreadyEnabled => "The hook for the specified target function is already \
-                                      enabled.",
+                                      enabled",
             Error::Disabled => "The hook for the specified target function is not enabled yet, or \
-                                already disabled.",
-            Error::NotExecutable => "The specified pointer is invalid. It points the address of \
-                                     non-allocated and/or non-executable region.",
-            Error::UnsupportedFunction => "The specified target function cannot be hooked.",
-            Error::MemoryAlloc => "Failed to allocate memory.",
-            Error::MemoryProtect => "Failed to change the memory protection.",
-            Error::ModuleNotFound => "The specified module is not loaded.",
-            Error::FunctionNotFound => "The specified function is not found.",
+                                already disabled",
+            Error::NotExecutable => "The specified pointer is invalid; it points the address of \
+                                     non-allocated and/or non-executable region",
+            Error::UnsupportedFunction => "The specified target function cannot be hooked",
+            Error::MemoryAlloc => "Failed to allocate memory",
+            Error::MemoryProtect => "Failed to change the memory protection",
+            Error::ModuleNotFound => "The specified module is not loaded",
+            Error::FunctionNotFound => "The specified function is not found",
 
-            Error::InvalidModuleName => "The specified module name is invalid.",
-            Error::InvalidFunctionName => "The specified function name is invalid."
+            Error::InvalidModuleName => "The specified module name is invalid",
+            Error::InvalidFunctionName => "The specified function name is invalid"
         })
     }
 }
