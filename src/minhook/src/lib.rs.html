@@ -862,6 +862,19 @@
 <span id="819">819</span>
 <span id="820">820</span>
 <span id="821">821</span>
+<span id="822">822</span>
+<span id="823">823</span>
+<span id="824">824</span>
+<span id="825">825</span>
+<span id="826">826</span>
+<span id="827">827</span>
+<span id="828">828</span>
+<span id="829">829</span>
+<span id="830">830</span>
+<span id="831">831</span>
+<span id="832">832</span>
+<span id="833">833</span>
+<span id="834">834</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! # The minhook-rs library</span>
 <span class='doccomment'>//! This library provides function hooking support to Rust by providing a</span>
@@ -969,15 +982,6 @@
     <span class='ident'>trampoline</span>: <span class='ident'>T</span>
 }
 
-<span class='doccomment'>/// A function name used for dynamically hooking a function.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>FunctionName</span><span class='op'>&lt;</span><span class='ident'>S</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>OsStr</span><span class='op'>&gt;&gt;</span> {
-    <span class='doccomment'>/// The function&#39;s ordinal value.</span>
-    <span class='ident'>Ordinal</span>(<span class='ident'>u16</span>),
-    <span class='doccomment'>/// The function&#39;s name.</span>
-    <span class='ident'>String</span>(<span class='ident'>S</span>)
-}
-
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span>: <span class='ident'>Function</span><span class='op'>&gt;</span> <span class='ident'>Hook</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Create a new hook given a target function and a compatible detour function.</span>
     <span class='doccomment'>///</span>
@@ -1019,8 +1023,8 @@
     <span class='doccomment'>/// The target module must remain loaded in memory for the entire duration of the hook.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// See `create()` for more safety requirements.</span>
-    <span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>create_api</span><span class='op'>&lt;</span><span class='ident'>M</span>, <span class='ident'>N</span>, <span class='ident'>D</span><span class='op'>&gt;</span>(<span class='ident'>target_module</span>: <span class='ident'>M</span>, <span class='ident'>target_function</span>: <span class='ident'>FunctionName</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>detour</span>: <span class='ident'>D</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Hook</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>M</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>OsStr</span><span class='op'>&gt;</span>, <span class='ident'>N</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>OsStr</span><span class='op'>&gt;</span>, <span class='ident'>T</span>: <span class='ident'>HookableWith</span><span class='op'>&lt;</span><span class='ident'>D</span><span class='op'>&gt;</span>, <span class='ident'>D</span>: <span class='ident'>Function</span> {
+    <span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>create_api</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>M</span>, <span class='ident'>D</span><span class='op'>&gt;</span>(<span class='ident'>target_module</span>: <span class='ident'>M</span>, <span class='ident'>target_function</span>: <span class='ident'>FunctionId</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>, <span class='ident'>detour</span>: <span class='ident'>D</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Hook</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>M</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>OsStr</span><span class='op'>&gt;</span>, <span class='ident'>T</span>: <span class='ident'>HookableWith</span><span class='op'>&lt;</span><span class='ident'>D</span><span class='op'>&gt;</span>, <span class='ident'>D</span>: <span class='ident'>Function</span> {
         <span class='kw'>fn</span> <span class='ident'>str_to_wstring</span>(<span class='ident'>string</span>: <span class='kw-2'>&amp;</span><span class='ident'>OsStr</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>winapi</span>::<span class='ident'>WCHAR</span><span class='op'>&gt;&gt;</span> {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>wide</span> <span class='op'>=</span> <span class='ident'>string</span>.<span class='ident'>encode_wide</span>().<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;&gt;</span>();
             <span class='kw'>if</span> <span class='ident'>wide</span>.<span class='ident'>contains</span>(<span class='kw-2'>&amp;</span><span class='number'>0</span>) {
@@ -1035,9 +1039,9 @@
         <span class='kw'>let</span> <span class='ident'>module_name</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>str_to_wstring</span>(<span class='ident'>target_module</span>.<span class='ident'>as_ref</span>()).<span class='ident'>ok_or</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidModuleName</span>));
 
         <span class='kw'>let</span> (<span class='ident'>function_name</span>, <span class='ident'>_data</span>) <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>target_function</span> {
-            <span class='ident'>FunctionName</span>::<span class='ident'>Ordinal</span>(<span class='ident'>ord</span>) <span class='op'>=&gt;</span> (<span class='ident'>ord</span> <span class='kw'>as</span> <span class='ident'>winapi</span>::<span class='ident'>LPCSTR</span>, <span class='ident'>Vec</span>::<span class='ident'>new</span>()),
-            <span class='ident'>FunctionName</span>::<span class='ident'>String</span>(<span class='ident'>name</span>) <span class='op'>=&gt;</span> {
-                <span class='kw'>let</span> <span class='ident'>symbol_name_wide</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>str_to_wstring</span>(<span class='ident'>name</span>.<span class='ident'>as_ref</span>()).<span class='ident'>ok_or</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidFunctionName</span>));
+            <span class='ident'>FunctionId</span>::<span class='ident'>Ordinal</span>(<span class='ident'>ord</span>) <span class='op'>=&gt;</span> (<span class='ident'>ord</span> <span class='kw'>as</span> <span class='ident'>winapi</span>::<span class='ident'>LPCSTR</span>, <span class='ident'>Vec</span>::<span class='ident'>new</span>()),
+            <span class='ident'>FunctionId</span>::<span class='ident'>Name</span>(<span class='ident'>name</span>) <span class='op'>=&gt;</span> {
+                <span class='kw'>let</span> <span class='ident'>symbol_name_wide</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>str_to_wstring</span>(<span class='ident'>name</span>).<span class='ident'>ok_or</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidFunctionName</span>));
 
                 <span class='kw'>let</span> <span class='ident'>size</span> <span class='op'>=</span> <span class='ident'>kernel32</span>::<span class='ident'>WideCharToMultiByte</span>(<span class='ident'>winapi</span>::<span class='ident'>CP_ACP</span>, <span class='number'>0</span>, <span class='ident'>symbol_name_wide</span>.<span class='ident'>as_ptr</span>(), <span class='op'>-</span><span class='number'>1</span>, <span class='ident'>ptr</span>::<span class='ident'>null_mut</span>(), <span class='number'>0</span>, <span class='ident'>ptr</span>::<span class='ident'>null</span>(), <span class='ident'>ptr</span>::<span class='ident'>null_mut</span>());
                 <span class='kw'>if</span> <span class='ident'>size</span> <span class='op'>==</span> <span class='number'>0</span> {
@@ -1103,6 +1107,28 @@
 
 
 
+<span class='doccomment'>/// A function identifier used for dynamically looking up a function.</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>FunctionId</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+    <span class='doccomment'>/// The function&#39;s ordinal value.</span>
+    <span class='ident'>Ordinal</span>(<span class='ident'>u16</span>),
+    <span class='doccomment'>/// The function&#39;s name.</span>
+    <span class='ident'>Name</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>OsStr</span>)
+}
+
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='ident'>FunctionId</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+    <span class='doccomment'>/// Create a function identifier given it&#39;s ordinal value.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>ordinal</span>(<span class='ident'>value</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='ident'>FunctionId</span><span class='op'>&lt;</span><span class='lifetime'>&#39;static</span><span class='op'>&gt;</span> {
+        <span class='ident'>FunctionId</span>::<span class='ident'>Ordinal</span>(<span class='ident'>value</span>)
+    }
+
+    <span class='doccomment'>/// Create a function identifier given it&#39;s string name.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>name</span><span class='op'>&lt;</span><span class='ident'>N</span>: ?<span class='ident'>Sized</span> <span class='op'>+</span> <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>OsStr</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>FunctionId</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+        <span class='ident'>FunctionId</span>::<span class='ident'>Name</span>(<span class='ident'>name</span>.<span class='ident'>as_ref</span>())
+    }
+}
+
+
 <span class='doccomment'>/// A hook with a static lifetime.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// This hook can only be constructed using the `static_hooks!` macro. It has one of the</span>
@@ -1141,7 +1167,7 @@
         <span class='kw'>let</span> <span class='ident'>hook</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>target</span> {
             <span class='ident'>__StaticHookTarget</span>::<span class='ident'>Static</span>(<span class='ident'>target</span>) <span class='op'>=&gt;</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Hook</span>::<span class='ident'>create</span>(<span class='ident'>target</span>, <span class='self'>self</span>.<span class='ident'>detour</span>)),
             <span class='ident'>__StaticHookTarget</span>::<span class='ident'>Dynamic</span>(<span class='ident'>module_name</span>, <span class='ident'>function_name</span>) <span class='op'>=&gt;</span>
-                <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Hook</span>::<span class='ident'>create_api</span>(<span class='ident'>module_name</span>, <span class='ident'>FunctionName</span>::<span class='ident'>String</span>(<span class='ident'>function_name</span>), <span class='self'>self</span>.<span class='ident'>detour</span>))
+                <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Hook</span>::<span class='ident'>create_api</span>(<span class='ident'>module_name</span>, <span class='ident'>FunctionId</span>::<span class='ident'>name</span>(<span class='ident'>function_name</span>), <span class='self'>self</span>.<span class='ident'>detour</span>))
         };
 
         <span class='self'>self</span>.<span class='ident'>hook</span>.<span class='ident'>initialize</span>(<span class='ident'>__StaticHookInner</span>(<span class='ident'>hook</span>, <span class='ident'>closure</span>)).<span class='ident'>map_err</span>(<span class='op'>|</span>_<span class='op'>|</span> <span class='ident'>Error</span>::<span class='ident'>AlreadyCreated</span>)
@@ -1570,7 +1596,7 @@
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>kernel32</span>::<span class='ident'>lstrlenW</span>(<span class='ident'>foo</span>.<span class='ident'>as_ptr</span>()), <span class='number'>3</span>);
             <span class='kw'>let</span> <span class='ident'>h</span> <span class='op'>=</span>  <span class='ident'>Hook</span>::<span class='op'>&lt;</span><span class='kw'>extern</span> <span class='string'>&quot;system&quot;</span> <span class='kw'>fn</span>(<span class='ident'>winapi</span>::<span class='ident'>LPCWSTR</span>) <span class='op'>-&gt;</span> <span class='ident'>c_int</span><span class='op'>&gt;</span>::<span class='ident'>create_api</span>(
                 <span class='string'>&quot;kernel32.dll&quot;</span>,
-                <span class='ident'>FunctionName</span>::<span class='ident'>String</span>(<span class='string'>&quot;lstrlenW&quot;</span>),
+                <span class='ident'>FunctionId</span>::<span class='ident'>name</span>(<span class='string'>&quot;lstrlenW&quot;</span>),
                 <span class='ident'>lstrlen_w_detour</span>).<span class='ident'>unwrap</span>();
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>kernel32</span>::<span class='ident'>lstrlenW</span>(<span class='ident'>foo</span>.<span class='ident'>as_ptr</span>()), <span class='number'>3</span>);
             <span class='ident'>h</span>.<span class='ident'>enable</span>().<span class='ident'>unwrap</span>();
