@@ -63,7 +63,7 @@ pub fn take_handler() -> Box<Fn(&DetourPanicInfo) + Sync + Send> {
 
 #[doc(hidden)]
 pub fn __handle(path: &'static str, name: &'static str, payload: Box<Any + Send>) -> ! {
-    let payload = AssertRecoverSafe::new(payload);
+    let payload = AssertRecoverSafe(payload);
 
     let _ = panic::recover(move || {
         let full_path = format!("{}::{}", path, name);
