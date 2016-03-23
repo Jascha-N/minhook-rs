@@ -13,6 +13,8 @@
            unboxed_closures,
            core_intrinsics)]
 #![cfg_attr(test, feature(static_recursion))]
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
 #![warn(missing_docs)]
 
 extern crate winapi;
@@ -60,6 +62,7 @@ pub struct HookQueue(Vec<(FnPointer, bool)>);
 
 impl HookQueue {
     /// Create a new empty queue.
+    #[cfg_attr(feature = "clippy", allow(new_without_default))]
     pub fn new() -> HookQueue {
         HookQueue(Vec::new())
     }
@@ -78,9 +81,9 @@ impl HookQueue {
 
     /// Applies all the changes in this queue at once.
     pub fn apply(&mut self) -> Result<()> {
-        initialize();
-
         static LOCK: StaticMutex = StaticMutex::new();
+
+        initialize();
         let _lock = LOCK.lock().unwrap();
 
         for &(target, enabled) in &*self.0 {
@@ -145,7 +148,7 @@ impl<T: Function> Hook<T> {
     /// The target module must remain loaded in memory for the entire duration of the hook.
     ///
     /// See `create()` for more safety requirements.
-    pub unsafe fn create_api<'a, M, D>(target_module: M, target_function: FunctionId<'a>, detour: D) -> Result<Hook<T>>
+    pub unsafe fn create_api<M, D>(target_module: M, target_function: FunctionId, detour: D) -> Result<Hook<T>>
     where M: AsRef<OsStr>, T: HookableWith<D>, D: Function {
         fn str_to_wstring(string: &OsStr) -> Option<Vec<winapi::WCHAR>> {
             let mut wide = string.encode_wide().collect::<Vec<_>>();

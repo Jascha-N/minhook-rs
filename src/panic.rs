@@ -58,7 +58,7 @@ where F: Fn(&DetourPanicInfo) + Sync + Send + 'static {
 ///
 /// If no custom handler is registered, the default handler will be returned.
 pub fn take_handler() -> Box<Fn(&DetourPanicInfo) + Sync + Send> {
-    HANDLER.take().unwrap_or(Box::new(default_handler))
+    HANDLER.take().unwrap_or_else(|| Box::new(default_handler))
 }
 
 #[doc(hidden)]
@@ -73,7 +73,7 @@ pub fn __handle(path: &'static str, name: &'static str, payload: Box<Any + Send>
         };
 
         HANDLER.with(|handler| {
-            if let &Some(ref handler) = handler {
+            if let Some(ref handler) = *handler {
                 handler(&info);
             } else {
                 default_handler(&info);
