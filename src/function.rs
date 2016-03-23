@@ -21,7 +21,7 @@ impl FnPointer {
     pub unsafe fn from_raw<T>(ptr: *mut T) -> FnPointer { FnPointer(ptr as *mut _) }
 
     /// Returns function pointer as a raw pointer.
-    pub fn to_raw<T>(self) -> *mut T { self.0 as *mut _ }
+    pub fn to_raw<T>(&self) -> *mut T { self.0 as *mut _ }
 }
 
 impl fmt::Pointer for FnPointer {
@@ -56,10 +56,10 @@ pub unsafe trait Function: Sized + Copy + Sync + 'static {
     unsafe fn from_ptr(ptr: FnPointer) -> Self;
 
     /// Returns a untyped function pointer for this function.
-    fn to_ptr(self) -> FnPointer;
+    fn to_ptr(&self) -> FnPointer;
 
     /// Returns this function as its unsafe variant.
-    fn to_unsafe(self) -> Self::Unsafe;
+    fn to_unsafe(&self) -> Self::Unsafe;
 }
 
 /// Trait representing an unsafe function.
@@ -153,12 +153,12 @@ macro_rules! impl_hookable {
                 mem::transmute(ptr.to_raw() as *mut ())
             }
 
-            fn to_ptr(self) -> FnPointer {
-                unsafe { FnPointer::from_raw(self as *mut ()) }
+            fn to_ptr(&self) -> FnPointer {
+                unsafe { FnPointer::from_raw(*self as *mut ()) }
             }
 
-            fn to_unsafe(self) -> Self::Unsafe {
-                unsafe { mem::transmute(self) }
+            fn to_unsafe(&self) -> Self::Unsafe {
+                unsafe { mem::transmute(*self) }
             }
         }
     };
