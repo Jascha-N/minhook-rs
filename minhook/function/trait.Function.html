@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-266' class='srclink' href='../../src/minhook/src/function.rs.html#37-63' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-256' class='srclink' href='../../src/minhook/src/function.rs.html#37-63' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub unsafe trait Function: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a> + 'static {
     type Unsafe: <a class='trait' href='../../minhook/function/trait.UnsafeFunction.html' title='minhook::function::UnsafeFunction'>UnsafeFunction</a>;
     type Args;
@@ -55,8 +55,8 @@
     const ARITY: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
 
     unsafe fn <a href='#tymethod.from_ptr' class='fnname'>from_ptr</a>(ptr: <a class='struct' href='../../minhook/function/struct.FnPointer.html' title='minhook::function::FnPointer'>FnPointer</a>) -&gt; Self;
-    fn <a href='#tymethod.to_ptr' class='fnname'>to_ptr</a>(self) -&gt; <a class='struct' href='../../minhook/function/struct.FnPointer.html' title='minhook::function::FnPointer'>FnPointer</a>;
-    fn <a href='#tymethod.to_unsafe' class='fnname'>to_unsafe</a>(self) -&gt; Self::<a class='trait' href='../../minhook/function/trait.Function.html' title='minhook::function::Function'>Unsafe</a>;
+    fn <a href='#tymethod.to_ptr' class='fnname'>to_ptr</a>(&amp;self) -&gt; <a class='struct' href='../../minhook/function/struct.FnPointer.html' title='minhook::function::FnPointer'>FnPointer</a>;
+    fn <a href='#tymethod.to_unsafe' class='fnname'>to_unsafe</a>(&amp;self) -&gt; Self::<a class='trait' href='../../minhook/function/trait.Function.html' title='minhook::function::Function'>Unsafe</a>;
 }</pre><div class='docblock'><p>Trait representing a function that can be used as a target function or detour function for
 hooking.</p>
 </div>
@@ -77,8 +77,8 @@ hooking.</p>
 <h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
 <p>This function is unsafe because it can not check if the argument points to a function
 of the correct type.</p>
-</div><h3 id='tymethod.to_ptr' class='method stab '><code>fn <a href='#tymethod.to_ptr' class='fnname'>to_ptr</a>(self) -&gt; <a class='struct' href='../../minhook/function/struct.FnPointer.html' title='minhook::function::FnPointer'>FnPointer</a></code></h3><div class='docblock'><p>Returns a untyped function pointer for this function.</p>
-</div><h3 id='tymethod.to_unsafe' class='method stab '><code>fn <a href='#tymethod.to_unsafe' class='fnname'>to_unsafe</a>(self) -&gt; Self::<a class='trait' href='../../minhook/function/trait.Function.html' title='minhook::function::Function'>Unsafe</a></code></h3><div class='docblock'><p>Returns this function as its unsafe variant.</p>
+</div><h3 id='tymethod.to_ptr' class='method stab '><code>fn <a href='#tymethod.to_ptr' class='fnname'>to_ptr</a>(&amp;self) -&gt; <a class='struct' href='../../minhook/function/struct.FnPointer.html' title='minhook::function::FnPointer'>FnPointer</a></code></h3><div class='docblock'><p>Returns a untyped function pointer for this function.</p>
+</div><h3 id='tymethod.to_unsafe' class='method stab '><code>fn <a href='#tymethod.to_unsafe' class='fnname'>to_unsafe</a>(&amp;self) -&gt; Self::<a class='trait' href='../../minhook/function/trait.Function.html' title='minhook::function::Function'>Unsafe</a></code></h3><div class='docblock'><p>Returns this function as its unsafe variant.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>

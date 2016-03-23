@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-13087' class='srclink' href='../src/minhook/src/lib.rs.html#102-105' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-13078' class='srclink' href='../src/minhook/src/lib.rs.html#105-108' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Hook&lt;T: <a class='trait' href='../minhook/function/trait.Function.html' title='minhook::function::Function'>Function</a>&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A hook that is destroyed when it goes out of scope.</p>
@@ -64,7 +64,7 @@ means two things: the given target function type has to be correct, but also the
 can not be two function pointers with different signatures pointing to the same
 code location. This last situation can for example happen when the Rust compiler
 or LLVM decide to merge multiple functions with the same code into one.</p>
-</div><h4 id='method.create_api' class='method'><code>unsafe fn <a href='#method.create_api' class='fnname'>create_api</a>&lt;'a, M, D&gt;(target_module: M, target_function: <a class='enum' href='../minhook/enum.FunctionId.html' title='minhook::FunctionId'>FunctionId</a>&lt;'a&gt;, detour: D) -&gt; <a class='type' href='../minhook/type.Result.html' title='minhook::Result'>Result</a>&lt;<a class='struct' href='../minhook/struct.Hook.html' title='minhook::Hook'>Hook</a>&lt;T&gt;&gt; <span class='where'>where M: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsStr.html' title='std::ffi::os_str::OsStr'>OsStr</a>&gt;, T: <a class='trait' href='../minhook/function/trait.HookableWith.html' title='minhook::function::HookableWith'>HookableWith</a>&lt;D&gt;, D: <a class='trait' href='../minhook/function/trait.Function.html' title='minhook::function::Function'>Function</a></span></code></h4>
+</div><h4 id='method.create_api' class='method'><code>unsafe fn <a href='#method.create_api' class='fnname'>create_api</a>&lt;M, D&gt;(target_module: M, target_function: <a class='enum' href='../minhook/enum.FunctionId.html' title='minhook::FunctionId'>FunctionId</a>, detour: D) -&gt; <a class='type' href='../minhook/type.Result.html' title='minhook::Result'>Result</a>&lt;<a class='struct' href='../minhook/struct.Hook.html' title='minhook::Hook'>Hook</a>&lt;T&gt;&gt; <span class='where'>where M: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsStr.html' title='std::ffi::os_str::OsStr'>OsStr</a>&gt;, T: <a class='trait' href='../minhook/function/trait.HookableWith.html' title='minhook::function::HookableWith'>HookableWith</a>&lt;D&gt;, D: <a class='trait' href='../minhook/function/trait.Function.html' title='minhook::function::Function'>Function</a></span></code></h4>
 <div class='docblock'><p>Create a new hook given the name of the module, the name of the function symbol and a
 compatible detour function.</p>
 

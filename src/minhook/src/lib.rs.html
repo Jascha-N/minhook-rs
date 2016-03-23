@@ -875,6 +875,9 @@
 <span id="832">832</span>
 <span id="833">833</span>
 <span id="834">834</span>
+<span id="835">835</span>
+<span id="836">836</span>
+<span id="837">837</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! # The minhook-rs library</span>
 <span class='doccomment'>//! This library provides function hooking support to Rust by providing a</span>
@@ -891,6 +894,8 @@
            <span class='ident'>unboxed_closures</span>,
            <span class='ident'>core_intrinsics</span>)]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>test</span>, <span class='ident'>feature</span>(<span class='ident'>static_recursion</span>))]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;clippy&quot;</span>, <span class='ident'>feature</span>(<span class='ident'>plugin</span>))]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;clippy&quot;</span>, <span class='ident'>plugin</span>(<span class='ident'>clippy</span>))]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>warn</span>(<span class='ident'>missing_docs</span>)]</span>
 
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>winapi</span>;
@@ -938,6 +943,7 @@
 
 <span class='kw'>impl</span> <span class='ident'>HookQueue</span> {
     <span class='doccomment'>/// Create a new empty queue.</span>
+    <span class='attribute'>#[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;clippy&quot;</span>, <span class='ident'>allow</span>(<span class='ident'>new_without_default</span>))]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='ident'>HookQueue</span> {
         <span class='ident'>HookQueue</span>(<span class='ident'>Vec</span>::<span class='ident'>new</span>())
     }
@@ -956,9 +962,9 @@
 
     <span class='doccomment'>/// Applies all the changes in this queue at once.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>apply</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-        <span class='ident'>initialize</span>();
-
         <span class='kw'>static</span> <span class='ident'>LOCK</span>: <span class='ident'>StaticMutex</span> <span class='op'>=</span> <span class='ident'>StaticMutex</span>::<span class='ident'>new</span>();
+
+        <span class='ident'>initialize</span>();
         <span class='kw'>let</span> <span class='ident'>_lock</span> <span class='op'>=</span> <span class='ident'>LOCK</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>();
 
         <span class='kw'>for</span> <span class='kw-2'>&amp;</span>(<span class='ident'>target</span>, <span class='ident'>enabled</span>) <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='self'>self</span>.<span class='number'>0</span> {
@@ -1023,7 +1029,7 @@
     <span class='doccomment'>/// The target module must remain loaded in memory for the entire duration of the hook.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// See `create()` for more safety requirements.</span>
-    <span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>create_api</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>M</span>, <span class='ident'>D</span><span class='op'>&gt;</span>(<span class='ident'>target_module</span>: <span class='ident'>M</span>, <span class='ident'>target_function</span>: <span class='ident'>FunctionId</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>, <span class='ident'>detour</span>: <span class='ident'>D</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Hook</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;&gt;</span>
+    <span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>create_api</span><span class='op'>&lt;</span><span class='ident'>M</span>, <span class='ident'>D</span><span class='op'>&gt;</span>(<span class='ident'>target_module</span>: <span class='ident'>M</span>, <span class='ident'>target_function</span>: <span class='ident'>FunctionId</span>, <span class='ident'>detour</span>: <span class='ident'>D</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Hook</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;&gt;</span>
     <span class='kw'>where</span> <span class='ident'>M</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>OsStr</span><span class='op'>&gt;</span>, <span class='ident'>T</span>: <span class='ident'>HookableWith</span><span class='op'>&lt;</span><span class='ident'>D</span><span class='op'>&gt;</span>, <span class='ident'>D</span>: <span class='ident'>Function</span> {
         <span class='kw'>fn</span> <span class='ident'>str_to_wstring</span>(<span class='ident'>string</span>: <span class='kw-2'>&amp;</span><span class='ident'>OsStr</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>winapi</span>::<span class='ident'>WCHAR</span><span class='op'>&gt;&gt;</span> {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>wide</span> <span class='op'>=</span> <span class='ident'>string</span>.<span class='ident'>encode_wide</span>().<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;&gt;</span>();
