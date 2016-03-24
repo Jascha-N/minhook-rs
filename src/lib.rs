@@ -21,8 +21,7 @@ extern crate winapi;
 extern crate kernel32;
 
 use std::{mem, ptr, ops, result};
-use std::error::Error as StdError;
-use std::sync::{Once, StaticMutex};
+use std::sync::StaticMutex;
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 
@@ -83,7 +82,7 @@ impl HookQueue {
     pub fn apply(&mut self) -> Result<()> {
         static LOCK: StaticMutex = StaticMutex::new();
 
-        initialize();
+        try!(initialize());
         let _lock = LOCK.lock().unwrap();
 
         for &(target, enabled) in &*self.0 {
@@ -124,7 +123,7 @@ impl<T: Function> Hook<T> {
     /// or LLVM decide to merge multiple functions with the same code into one.
     pub unsafe fn create<D>(target: T, detour: D) -> Result<Hook<T>>
     where T: HookableWith<D>, D: Function {
-        initialize();
+        try!(initialize());
 
         let target = target.to_ptr();
         let detour = detour.to_ptr();
@@ -159,7 +158,7 @@ impl<T: Function> Hook<T> {
             Some(wide)
         }
 
-        initialize();
+        try!(initialize());
 
         let module_name = try!(str_to_wstring(target_module.as_ref()).ok_or(Error::InvalidModuleName));
 
@@ -295,7 +294,7 @@ impl<T: Function> StaticHook<T> {
                 try!(Hook::create_api(module_name, FunctionId::name(function_name), self.detour))
         };
 
-        self.hook.initialize(__StaticHookInner(hook, closure)).map_err(|_| Error::AlreadyCreated)
+        Ok(self.hook.initialize(__StaticHookInner(hook, closure)).expect("static hook already initialized"))
     }
 
     unsafe fn initialize_box(&self, closure: Box<Fn<T::Args, Output = T::Output> + Sync>) -> Result<()> {
@@ -308,7 +307,7 @@ impl<T: Function> StaticHook<T> {
     ///
     /// # Panics
     ///
-    /// Panics if the hook was accessed or initialized before this call.
+    /// Panics if the hook was already initialized.
     ///
     /// # Safety
     ///
@@ -366,7 +365,7 @@ impl<T: Function> StaticHookWithDefault<T> {
     ///
     /// # Panics
     ///
-    /// Panics if the hook was accessed or initialized before this call.
+    /// Panics if the hook was already initialized.
     ///
     /// # Safety
     ///
@@ -387,14 +386,13 @@ impl<T: Function> ops::Deref for StaticHookWithDefault<T> {
 
 
 
-static INIT: Once = Once::new();
-
-fn initialize() {
-    INIT.call_once(|| unsafe {
-        let _ = s2r(ffi::MH_Initialize()).map_err(|error| {
-            panic!("initialization failed with error: {}", error.description());
-        });
-    });
+fn initialize() -> Result<()> {
+    unsafe {
+        s2r(ffi::MH_Initialize()).or_else(|error| match error {
+            Error::AlreadyInitialized => Ok(()),
+            error => Err(error)
+        })
+    }
 }
 
 fn s2r(status: ffi::MH_STATUS) -> Result<()> {
