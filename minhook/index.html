@@ -43,109 +43,98 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>minhook</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-0' class='srclink' href='../src/minhook/src/lib.rs.html#1-837' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-0' class='srclink' href='../src/minhook/src/lib.rs.html#1-835' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'>
 <h1 id='the-minhook-rs-library' class='section-header'><a href='#the-minhook-rs-library'>The minhook-rs library</a></h1>
 <p>This library provides function hooking support to Rust by providing a
 wrapper around the <a href="http://www.codeproject.com/KB/winsdk/LibMinHook.aspx">MinHook</a> library.</p>
 </div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='mod' href='function/index.html'
-                               title='minhook::function'>function</a></td>
-                        <td class='docblock short'>
-                             <p>Module containing information about hookable functions.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='mod' href='panic/index.html'
-                               title='minhook::panic'>panic</a></td>
-                        <td class='docblock short'>
-                             <p>Panic handling for panics caught at foreign code boundaries in detour functions.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='macros' class='section-header'><a href="#macros">Macros</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='function/index.html'
+                                  title='minhook::function'>function</a></td>
+                           <td class='docblock short'>
+                                <p>Module containing information about hookable functions.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='panic/index.html'
+                                  title='minhook::panic'>panic</a></td>
+                           <td class='docblock short'>
+                                <p>Panic handling for panics caught at foreign code boundaries in detour functions.</p>
+                           </td>
+                       </tr></table><h2 id='macros' class='section-header'><a href="#macros">Macros</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='macro' href='macro.static_hooks!.html'
-                               title='minhook::static_hooks!'>static_hooks!</a></td>
-                        <td class='docblock short'>
-                             <p>Defines one or more static hooks.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='macro' href='macro.static_hooks!.html'
+                                  title='minhook::static_hooks!'>static_hooks!</a></td>
+                           <td class='docblock short'>
+                                <p>Defines one or more static hooks.</p>
+                           </td>
+                       </tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Hook.html'
-                               title='minhook::Hook'>Hook</a></td>
-                        <td class='docblock short'>
-                             <p>A hook that is destroyed when it goes out of scope.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.HookQueue.html'
-                               title='minhook::HookQueue'>HookQueue</a></td>
-                        <td class='docblock short'>
-                             <p>A queue of hook changes to be applied at once.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.StaticHook.html'
-                               title='minhook::StaticHook'>StaticHook</a></td>
-                        <td class='docblock short'>
-                             <p>A hook with a static lifetime.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.StaticHookWithDefault.html'
-                               title='minhook::StaticHookWithDefault'>StaticHookWithDefault</a></td>
-                        <td class='docblock short'>
-                             <p>A hook with a static lifetime and a default detour closure.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Hook.html'
+                                  title='minhook::Hook'>Hook</a></td>
+                           <td class='docblock short'>
+                                <p>A hook that is destroyed when it goes out of scope.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.HookQueue.html'
+                                  title='minhook::HookQueue'>HookQueue</a></td>
+                           <td class='docblock short'>
+                                <p>A queue of hook changes to be applied at once.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.StaticHook.html'
+                                  title='minhook::StaticHook'>StaticHook</a></td>
+                           <td class='docblock short'>
+                                <p>A hook with a static lifetime.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.StaticHookWithDefault.html'
+                                  title='minhook::StaticHookWithDefault'>StaticHookWithDefault</a></td>
+                           <td class='docblock short'>
+                                <p>A hook with a static lifetime and a default detour closure.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.Error.html'
-                               title='minhook::Error'>Error</a></td>
-                        <td class='docblock short'>
-                             <p>The error type for all hooking operations.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.FunctionId.html'
-                               title='minhook::FunctionId'>FunctionId</a></td>
-                        <td class='docblock short'>
-                             <p>A function identifier used for dynamically looking up a function.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.Error.html'
+                                  title='minhook::Error'>Error</a></td>
+                           <td class='docblock short'>
+                                <p>The error type for all hooking operations.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.FunctionId.html'
+                                  title='minhook::FunctionId'>FunctionId</a></td>
+                           <td class='docblock short'>
+                                <p>A function identifier used for dynamically looking up a function.</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.uninitialize.html'
-                               title='minhook::uninitialize'>uninitialize</a></td>
-                        <td class='docblock short'>
-                             <p>Uninitializes the minhook-rs library.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.uninitialize.html'
+                                  title='minhook::uninitialize'>uninitialize</a></td>
+                           <td class='docblock short'>
+                                <p>Uninitializes the minhook-rs library.</p>
+                           </td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='type' href='type.Result.html'
-                               title='minhook::Result'>Result</a></td>
-                        <td class='docblock short'>
-                             <p>Result type for most functions and methods in this module.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                       <tr class=' module-item'>
+                           <td><a class='type' href='type.Result.html'
+                                  title='minhook::Result'>Result</a></td>
+                           <td class='docblock short'>
+                                <p>Result type for most functions and methods in this module.</p>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

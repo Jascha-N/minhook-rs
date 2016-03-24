@@ -43,10 +43,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>minhook</a>::<wbr><a class='struct' href=''>StaticHook</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-13164' class='srclink' href='../src/minhook/src/lib.rs.html#270-274' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-13169' class='srclink' href='../src/minhook/src/lib.rs.html#269-273' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct StaticHook&lt;T: <a class='trait' href='../minhook/function/trait.Function.html' title='minhook::function::Function'>Function</a>&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A hook with a static lifetime.</p>
@@ -67,7 +67,7 @@ failed) will result in a panic.</p>
 <div class='docblock'><p>Initialize and install the underlying hook using a detour closure.</p>
 
 <h1 id='panics' class='section-header'><a href='#panics'>Panics</a></h1>
-<p>Panics if the hook was accessed or initialized before this call.</p>
+<p>Panics if the hook was already initialized.</p>
 
 <h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
 <p>See documentation for <a href="struct.Hook.html#method.create"><code>Hook::create()</code></a> and
