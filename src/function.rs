@@ -4,12 +4,13 @@
 //! by users of this library.
 
 use std::{fmt, mem};
+use std::os::raw::c_void;
 
 use super::Hook;
 
 /// An untyped function pointer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct FnPointer(*mut ());
+pub struct FnPointer(*mut c_void);
 
 impl FnPointer {
     /// Creates a function pointer from a raw pointer.
@@ -18,10 +19,10 @@ impl FnPointer {
     ///
     /// This function is unsafe because it can not check if the argument points to valid
     /// executable memory.
-    pub unsafe fn from_raw<T>(ptr: *mut T) -> FnPointer { FnPointer(ptr as *mut _) }
+    pub unsafe fn from_raw(ptr: *mut c_void) -> FnPointer { FnPointer(ptr) }
 
     /// Returns function pointer as a raw pointer.
-    pub fn to_raw<T>(&self) -> *mut T { self.0 as *mut _ }
+    pub fn to_raw(&self) -> *mut c_void { self.0 }
 }
 
 impl fmt::Pointer for FnPointer {
@@ -156,7 +157,7 @@ macro_rules! impl_hookable {
             }
 
             fn to_ptr(&self) -> FnPointer {
-                unsafe { FnPointer::from_raw(*self as *mut ()) }
+                unsafe { FnPointer::from_raw(*self as *mut c_void) }
             }
 
             #[cfg_attr(feature = "clippy", allow(useless_transmute))]
