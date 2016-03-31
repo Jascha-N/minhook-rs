@@ -48,11 +48,11 @@
                    </a>
                </span><a id='src-254' class='srclink' href='../../src/minhook/src/function.rs.html#38-64' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub unsafe trait Function: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a> + 'static {
-    type Unsafe: <a class='trait' href='../../minhook/function/trait.UnsafeFunction.html' title='minhook::function::UnsafeFunction'>UnsafeFunction</a>;
-    type Args;
-    type Output;
+    type <a href='#associatedtype.Unsafe' class='type'>Unsafe</a>: <a class='trait' href='../../minhook/function/trait.UnsafeFunction.html' title='minhook::function::UnsafeFunction'>UnsafeFunction</a>;
+    type <a href='#associatedtype.Args' class='type'>Args</a>;
+    type <a href='#associatedtype.Output' class='type'>Output</a>;
 
-    const ARITY: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
+    const <a href='#associatedconstant.ARITY' class='constant'>ARITY</a>: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
 
     unsafe fn <a href='#tymethod.from_ptr' class='fnname'>from_ptr</a>(ptr: <a class='struct' href='../../minhook/function/struct.FnPointer.html' title='minhook::function::FnPointer'>FnPointer</a>) -&gt; Self;
     fn <a href='#tymethod.to_ptr' class='fnname'>to_ptr</a>(&amp;self) -&gt; <a class='struct' href='../../minhook/function/struct.FnPointer.html' title='minhook::function::FnPointer'>FnPointer</a>;
@@ -62,13 +62,13 @@ hooking.</p>
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Unsafe' class='method stab '><code>type Unsafe: <a class='trait' href='../../minhook/function/trait.UnsafeFunction.html' title='minhook::function::UnsafeFunction'>UnsafeFunction</a></code></h3><div class='docblock'><p>Unsafe version of this function.</p>
-</div><h3 id='associatedtype.Args' class='method stab '><code>type Args</code></h3><div class='docblock'><p>The argument types as a tuple.</p>
-</div><h3 id='associatedtype.Output' class='method stab '><code>type Output</code></h3><div class='docblock'><p>The return type.</p>
+        <h3 id='associatedtype.Unsafe' class='method stab '><code>type <a href='#associatedtype.Unsafe' class='type'>Unsafe</a>: <a class='trait' href='../../minhook/function/trait.UnsafeFunction.html' title='minhook::function::UnsafeFunction'>UnsafeFunction</a></code></h3><div class='docblock'><p>Unsafe version of this function.</p>
+</div><h3 id='associatedtype.Args' class='method stab '><code>type <a href='#associatedtype.Args' class='type'>Args</a></code></h3><div class='docblock'><p>The argument types as a tuple.</p>
+</div><h3 id='associatedtype.Output' class='method stab '><code>type <a href='#associatedtype.Output' class='type'>Output</a></code></h3><div class='docblock'><p>The return type.</p>
 </div></div>
             <h2 id='associated-const'>Associated Constants</h2>
             <div class='methods'>
-        <h3 id='associatedconstant.ARITY' class='method stab '><code>const ARITY: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><div class='docblock'><p>The function&#39;s arity (number of arguments).</p>
+        <h3 id='associatedconstant.ARITY' class='method stab '><code>const <a href='#associatedconstant.ARITY' class='constant'>ARITY</a>: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><div class='docblock'><p>The function&#39;s arity (number of arguments).</p>
 </div></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
