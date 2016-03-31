@@ -153,7 +153,7 @@ macro_rules! impl_hookable {
             const ARITY: usize = impl_hookable!(count: ($($ty)*));
 
             unsafe fn from_ptr(ptr: FnPointer) -> Self {
-                mem::transmute(ptr.to_raw() as *mut ())
+                mem::transmute(ptr.to_raw())
             }
 
             fn to_ptr(&self) -> FnPointer {
