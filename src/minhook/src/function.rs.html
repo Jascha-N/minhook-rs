@@ -391,7 +391,7 @@
             <span class='kw'>const</span> <span class='ident'>ARITY</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='macro'>impl_hookable</span><span class='macro'>!</span>(<span class='ident'>count</span>: ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>ty</span>)<span class='op'>*</span>));
 
             <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>from_ptr</span>(<span class='ident'>ptr</span>: <span class='ident'>FnPointer</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
-                <span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>ptr</span>.<span class='ident'>to_raw</span>() <span class='kw'>as</span> <span class='op'>*</span><span class='kw-2'>mut</span> ())
+                <span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>ptr</span>.<span class='ident'>to_raw</span>())
             }
 
             <span class='kw'>fn</span> <span class='ident'>to_ptr</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>FnPointer</span> {
@@ -429,7 +429,8 @@
     <span class='ident'>__arg_7</span>:  <span class='ident'>H</span>, <span class='ident'>__arg_8</span>:  <span class='ident'>I</span>, <span class='ident'>__arg_9</span>:  <span class='ident'>J</span>, <span class='ident'>__arg_10</span>: <span class='ident'>K</span>, <span class='ident'>__arg_11</span>: <span class='ident'>L</span>, <span class='ident'>__arg_12</span>: <span class='ident'>M</span>, <span class='ident'>__arg_13</span>: <span class='ident'>N</span>,
     <span class='ident'>__arg_14</span>: <span class='ident'>O</span>, <span class='ident'>__arg_15</span>: <span class='ident'>P</span>, <span class='ident'>__arg_16</span>: <span class='ident'>Q</span>, <span class='ident'>__arg_17</span>: <span class='ident'>R</span>, <span class='ident'>__arg_18</span>: <span class='ident'>S</span>, <span class='ident'>__arg_19</span>: <span class='ident'>T</span>, <span class='ident'>__arg_20</span>: <span class='ident'>U</span>,
     <span class='ident'>__arg_21</span>: <span class='ident'>V</span>, <span class='ident'>__arg_22</span>: <span class='ident'>W</span>, <span class='ident'>__arg_23</span>: <span class='ident'>X</span>, <span class='ident'>__arg_24</span>: <span class='ident'>Y</span>, <span class='ident'>__arg_25</span>: <span class='ident'>Z</span>
-}</pre>
+}
+</pre>
 </section>
     <section id='search' class="content hidden"></section>
 
