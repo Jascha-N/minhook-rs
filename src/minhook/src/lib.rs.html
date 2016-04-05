@@ -873,9 +873,6 @@
 <span id="830">830</span>
 <span id="831">831</span>
 <span id="832">832</span>
-<span id="833">833</span>
-<span id="834">834</span>
-<span id="835">835</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! # The minhook-rs library</span>
 <span class='doccomment'>//! This library provides function hooking support to Rust by providing a</span>
@@ -896,6 +893,7 @@
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;clippy&quot;</span>, <span class='ident'>plugin</span>(<span class='ident'>clippy</span>))]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>warn</span>(<span class='ident'>missing_docs</span>)]</span>
 
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>winapi</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>kernel32</span>;
 
@@ -920,18 +918,6 @@
 
 <span class='doccomment'>/// Result type for most functions and methods in this module.</span>
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>result</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>Error</span><span class='op'>&gt;</span>;
-
-<span class='doccomment'>/// Uninitializes the minhook-rs library.</span>
-<span class='doccomment'>///</span>
-<span class='doccomment'>/// # Safety</span>
-<span class='doccomment'>///</span>
-<span class='doccomment'>/// This function is unsafe because any live hooks might still depend on this library. After</span>
-<span class='doccomment'>/// calling this function existing trampoline functions might point to uninitialized memory.</span>
-<span class='doccomment'>/// Only use this function when you are absolutely sure no hook objects will be accessed after</span>
-<span class='doccomment'>/// its use.</span>
-<span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>uninitialize</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-    <span class='ident'>s2r</span>(<span class='ident'>ffi</span>::<span class='ident'>MH_Uninitialize</span>())
-}
 
 
 
@@ -1266,8 +1252,16 @@
 
 
 <span class='kw'>fn</span> <span class='ident'>initialize</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+    <span class='comment'>// Clean-up is *required* in DLLs. If a DLL gets unloaded while static hooks are installed</span>
+    <span class='comment'>// the hook instructions will point to detour functions that are already unloaded.</span>
+    <span class='kw'>extern</span> <span class='string'>&quot;C&quot;</span> <span class='kw'>fn</span> <span class='ident'>cleanup</span>() {
+        <span class='kw'>let</span> _ <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>ffi</span>::<span class='ident'>MH_Uninitialize</span>() };
+    }
+
     <span class='kw'>unsafe</span> {
-        <span class='ident'>s2r</span>(<span class='ident'>ffi</span>::<span class='ident'>MH_Initialize</span>()).<span class='ident'>or_else</span>(<span class='op'>|</span><span class='ident'>error</span><span class='op'>|</span> <span class='kw'>match</span> <span class='ident'>error</span> {
+        <span class='ident'>s2r</span>(<span class='ident'>ffi</span>::<span class='ident'>MH_Initialize</span>()).<span class='ident'>map</span>(<span class='op'>|</span>_<span class='op'>|</span> {
+            <span class='ident'>libc</span>::<span class='ident'>atexit</span>(<span class='ident'>cleanup</span>);
+        }).<span class='ident'>or_else</span>(<span class='op'>|</span><span class='ident'>error</span><span class='op'>|</span> <span class='kw'>match</span> <span class='ident'>error</span> {
             <span class='ident'>Error</span>::<span class='ident'>AlreadyInitialized</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(()),
             <span class='ident'>error</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>error</span>)
         })
