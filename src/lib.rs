@@ -10,8 +10,7 @@
            std_panic,
            recover,
            associated_consts,
-           unboxed_closures,
-           core_intrinsics)]
+           unboxed_closures)]
 #![cfg_attr(test, feature(static_recursion))]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]

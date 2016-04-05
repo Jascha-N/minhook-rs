@@ -1,6 +1,6 @@
 //! Panic handling for panics caught at foreign code boundaries in detour functions.
 
-use std::intrinsics;
+use libc;
 use std::any::Any;
 use std::io::{self, Write};
 use std::panic::{self, AssertRecoverSafe};
@@ -81,7 +81,7 @@ pub fn __handle(path: &'static str, name: &'static str, payload: Box<Any + Send>
         });
     });
 
-    unsafe { intrinsics::abort() }
+    unsafe { libc::abort() }
 }
 
 fn default_handler(info: &DetourPanicInfo) {
