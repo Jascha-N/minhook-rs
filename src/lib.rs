@@ -17,6 +17,7 @@
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 #![warn(missing_docs)]
 
+extern crate libc;
 extern crate winapi;
 extern crate kernel32;
 
@@ -41,18 +42,6 @@ pub mod panic;
 
 /// Result type for most functions and methods in this module.
 pub type Result<T> = result::Result<T, Error>;
-
-/// Uninitializes the minhook-rs library.
-///
-/// # Safety
-///
-/// This function is unsafe because any live hooks might still depend on this library. After
-/// calling this function existing trampoline functions might point to uninitialized memory.
-/// Only use this function when you are absolutely sure no hook objects will be accessed after
-/// its use.
-pub unsafe fn uninitialize() -> Result<()> {
-    s2r(ffi::MH_Uninitialize())
-}
 
 
 
@@ -387,8 +376,16 @@ impl<T: Function> ops::Deref for StaticHookWithDefault<T> {
 
 
 fn initialize() -> Result<()> {
+    // Clean-up is *required* in DLLs. If a DLL gets unloaded while static hooks are installed
+    // the hook instructions will point to detour functions that are already unloaded.
+    extern "C" fn cleanup() {
+        let _ = unsafe { ffi::MH_Uninitialize() };
+    }
+
     unsafe {
-        s2r(ffi::MH_Initialize()).or_else(|error| match error {
+        s2r(ffi::MH_Initialize()).map(|_| {
+            libc::atexit(cleanup);
+        }).or_else(|error| match error {
             Error::AlreadyInitialized => Ok(()),
             error => Err(error)
         })
