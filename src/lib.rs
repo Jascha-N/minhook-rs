@@ -185,9 +185,9 @@ impl<T: Function> Hook<T> {
         })
     }
 
-    /// Returns an unsafe reference to the trampoline function.
+    /// Returns a pointer to the trampoline function.
     ///
-    /// Calling the returned function is always unsafe as it will point to invalid memory after the
+    /// Calling the returned function is unsafe because it will point to invalid memory after the
     /// hook is destroyed.
     pub fn trampoline(&self) -> T::Unsafe {
         self.trampoline.to_unsafe()
