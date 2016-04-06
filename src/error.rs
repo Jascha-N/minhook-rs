@@ -1,11 +1,14 @@
-use std::{error, fmt};
+use std::error;
+use std::fmt::{self, Display, Formatter};
 
 use ffi::MH_STATUS;
+
+
 
 /// The error type for all hooking operations.
 ///
 /// MinHook error status codes map directly to this type.
-#[derive(Copy, PartialEq, Eq, Clone, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Error {
     /// MinHook is already initialized.
     AlreadyInitialized,
@@ -84,9 +87,9 @@ impl error::Error for Error {
     }
 }
 
-impl fmt::Display for Error {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-         write!(fmt, "{}", match *self {
+impl Display for Error {
+    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
+         write!(formatter, "{}", match *self {
             Error::AlreadyInitialized => "MinHook is already initialized",
             Error::NotInitialized => "MinHook is not initialized yet, or already uninitialized",
             Error::AlreadyCreated => "The hook for the specified target function is already \

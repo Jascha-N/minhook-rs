@@ -9,6 +9,8 @@ use std::ptr;
 
 pub use winapi::{LPCSTR, LPCWSTR, LPVOID};
 
+
+
 /// MinHook Error Codes.
 #[must_use]
 #[repr(C)]
@@ -46,9 +48,13 @@ pub enum MH_STATUS {
     MH_ERROR_FUNCTION_NOT_FOUND
 }
 
+
+
 /// Can be passed as a parameter to `MH_EnableHook`, `MH_DisableHook`,
 /// `MH_QueueEnableHook` or `MH_QueueDisableHook`.
 pub const MH_ALL_HOOKS: LPVOID = ptr::null_mut();
+
+
 
 extern "system" {
     /// Initialize the MinHook library.

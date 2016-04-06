@@ -8,6 +8,8 @@ use std::os::raw::c_void;
 
 use super::Hook;
 
+
+
 /// An untyped function pointer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FnPointer(*mut c_void);
@@ -30,6 +32,8 @@ impl fmt::Pointer for FnPointer {
         write!(fmt, "{:p}", self.0)
     }
 }
+
+
 
 /// Trait representing a function that can be used as a target function or detour function for
 /// hooking.
@@ -63,8 +67,12 @@ pub unsafe trait Function: Sized + Copy + Sync + 'static {
     fn to_unsafe(&self) -> Self::Unsafe;
 }
 
+
+
 /// Trait representing an unsafe function.
 pub unsafe trait UnsafeFunction: Function {}
+
+
 
 /// Marker trait indicating that the function `Self` can be hooked by the given function `D`.
 #[rustc_on_unimplemented = "The type `{D}` is not a suitable detour function type for a \
@@ -74,110 +82,6 @@ pub unsafe trait HookableWith<D: Function>: Function {}
 unsafe impl<T: Function> HookableWith<T> for T {}
 
 
-
-macro_rules! impl_hookable {
-    (recurse: () ($($nm:ident : $ty:ident),*)) => {
-        impl_hookable!(impl_all: ($($nm : $ty),*));
-    };
-    (recurse: ($hd_nm:ident : $hd_ty:ident $(, $tl_nm:ident : $tl_ty:ident)*) ($($nm:ident : $ty:ident),*)) => {
-        impl_hookable!(impl_all: ($($nm : $ty),*));
-        impl_hookable!(recurse: ($($tl_nm : $tl_ty),*) ($($nm : $ty,)* $hd_nm : $hd_ty));
-    };
-
-    (impl_all: ($($nm:ident : $ty:ident),*)) => {
-        impl_hookable!(impl_pair: ($($nm : $ty),*) (                  fn($($ty),*) -> Ret));
-        impl_hookable!(impl_pair: ($($nm : $ty),*) (extern "cdecl"    fn($($ty),*) -> Ret));
-        impl_hookable!(impl_pair: ($($nm : $ty),*) (extern "stdcall"  fn($($ty),*) -> Ret));
-        impl_hookable!(impl_pair: ($($nm : $ty),*) (extern "fastcall" fn($($ty),*) -> Ret));
-        impl_hookable!(impl_pair: ($($nm : $ty),*) (extern "win64"    fn($($ty),*) -> Ret));
-        impl_hookable!(impl_pair: ($($nm : $ty),*) (extern "C"        fn($($ty),*) -> Ret));
-        impl_hookable!(impl_pair: ($($nm : $ty),*) (extern "system"   fn($($ty),*) -> Ret));
-    };
-
-    (impl_pair: ($($nm:ident : $ty:ident),*) ($($fn_t:tt)*)) => {
-        impl_hookable!(impl_fun: ($($nm : $ty),*) ($($fn_t)*) (unsafe $($fn_t)*));
-    };
-
-    (impl_fun: ($($nm:ident : $ty:ident),*) ($safe_type:ty) ($unsafe_type:ty)) => {
-        impl_hookable!(impl_core: ($($nm : $ty),*) ($safe_type) ($unsafe_type));
-        impl_hookable!(impl_core: ($($nm : $ty),*) ($unsafe_type) ($unsafe_type));
-
-        impl_hookable!(impl_hookable_with: ($($nm : $ty),*) ($unsafe_type) ($safe_type));
-
-        impl_hookable!(impl_safe: ($($nm : $ty),*) ($safe_type));
-        impl_hookable!(impl_unsafe: ($($nm : $ty),*) ($unsafe_type));
-    };
-
-    (impl_hookable_with: ($($nm:ident : $ty:ident),*) ($target:ty) ($detour:ty)) => {
-        unsafe impl<Ret: 'static, $($ty: 'static),*> HookableWith<$detour> for $target {}
-    };
-
-    // (impl_safe: ($nm:ident : $ty:ident) ($fn_type:ty)) => {
-    //     impl<Ret: 'static, $ty: 'static> Hook<$fn_type> {
-    //         /// Call the original function.
-    //         #[inline]
-    //         pub fn call_real(&self, $nm : $ty) -> Ret {
-    //             (self.trampoline)($nm)
-    //         }
-    //     }
-    // };
-
-    (impl_safe: ($($nm:ident : $ty:ident),*) ($fn_type:ty)) => {
-        impl<Ret: 'static, $($ty: 'static),*> Hook<$fn_type> {
-            #[doc(hidden)]
-            #[cfg_attr(feature = "clippy", allow(too_many_arguments))]
-            pub fn call_real(&self, $($nm : $ty),*) -> Ret {
-                (self.trampoline)($($nm),*)
-            }
-        }
-    };
-
-    (impl_unsafe: ($($nm:ident : $ty:ident),*) ($fn_type:ty)) => {
-        unsafe impl<Ret: 'static, $($ty: 'static),*> UnsafeFunction for $fn_type {}
-
-        impl<Ret: 'static, $($ty: 'static),*> Hook<$fn_type> {
-            #[doc(hidden)]
-            #[cfg_attr(feature = "clippy", allow(too_many_arguments))]
-            pub unsafe fn call_real(&self, $($nm : $ty),*) -> Ret {
-                (self.trampoline)($($nm),*)
-            }
-        }
-    };
-
-    (impl_core: ($($nm:ident : $ty:ident),*) ($fn_type:ty) ($unsafe_type:ty)) => {
-        unsafe impl<Ret: 'static, $($ty: 'static),*> Function for $fn_type {
-            type Args = ($($ty,)*);
-            type Output = Ret;
-            type Unsafe = $unsafe_type;
-
-            const ARITY: usize = impl_hookable!(count: ($($ty)*));
-
-            unsafe fn from_ptr(ptr: FnPointer) -> Self {
-                mem::transmute(ptr.to_raw())
-            }
-
-            fn to_ptr(&self) -> FnPointer {
-                unsafe { FnPointer::from_raw(*self as *mut c_void) }
-            }
-
-            #[cfg_attr(feature = "clippy", allow(useless_transmute))]
-            fn to_unsafe(&self) -> Self::Unsafe {
-                unsafe { mem::transmute(*self) }
-            }
-        }
-    };
-
-    (count: ()) => {
-        0
-    };
-    (count: ($hd:tt $($tl:tt)*)) => {
-        1 + impl_hookable!(count: ($($tl)*))
-    };
-
-    ($($nm:ident : $ty:ident),*) => {
-        impl_hookable!(recurse: ($($nm : $ty),*) ());
-    };
-}
 
 #[cfg(not(feature = "increased_arity"))]
 impl_hookable! {

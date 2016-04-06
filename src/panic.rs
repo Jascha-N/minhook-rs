@@ -10,6 +10,7 @@ use sync::StaticRwCell;
 
 
 /// A struct providing information about a panic that happened inside of a guarded detour function.
+#[derive(Clone, Copy, Debug)]
 pub struct DetourPanicInfo<'a> {
     payload: &'a (Any + Send),
     detour: &'a str
