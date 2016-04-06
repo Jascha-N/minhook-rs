@@ -191,6 +191,12 @@
 <span id="148">148</span>
 <span id="149">149</span>
 <span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Raw bindings for the MinHook library.</span>
 <span class='doccomment'>//!</span>
@@ -202,6 +208,8 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ptr</span>;
 
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>winapi</span>::{<span class='ident'>LPCSTR</span>, <span class='ident'>LPCWSTR</span>, <span class='ident'>LPVOID</span>};
+
+
 
 <span class='doccomment'>/// MinHook Error Codes.</span>
 <span class='attribute'>#[<span class='ident'>must_use</span>]</span>
@@ -240,9 +248,13 @@
     <span class='ident'>MH_ERROR_FUNCTION_NOT_FOUND</span>
 }
 
+
+
 <span class='doccomment'>/// Can be passed as a parameter to `MH_EnableHook`, `MH_DisableHook`,</span>
 <span class='doccomment'>/// `MH_QueueEnableHook` or `MH_QueueDisableHook`.</span>
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MH_ALL_HOOKS</span>: <span class='ident'>LPVOID</span> <span class='op'>=</span> <span class='ident'>ptr</span>::<span class='ident'>null_mut</span>();
+
+
 
 <span class='kw'>extern</span> <span class='string'>&quot;system&quot;</span> {
     <span class='doccomment'>/// Initialize the MinHook library.</span>

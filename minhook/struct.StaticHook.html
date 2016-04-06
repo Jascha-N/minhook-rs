@@ -46,7 +46,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-13168' class='srclink' href='../src/minhook/src/lib.rs.html#258-262' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-13228' class='srclink' href='../src/minhook/src/lib.rs.html#260-264' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct StaticHook&lt;T: <a class='trait' href='../minhook/function/trait.Function.html' title='minhook::function::Function'>Function</a>&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A hook with a static lifetime.</p>
@@ -73,9 +73,9 @@ failed) will result in a panic.</p>
 <p>See documentation for <a href="struct.Hook.html#method.create"><code>Hook::create()</code></a> and
 <a href="struct.Hook.html#method.create_api"><code>Hook::create_api()</code></a></p>
 </div></div><h2 id='deref-methods'>Methods from <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Deref.html' title='core::ops::Deref'>Deref</a>&lt;Target=<a class='struct' href='../minhook/struct.Hook.html' title='minhook::Hook'>Hook</a>&lt;T&gt;&gt;</h2><div class='impl-items'><h4 id='method.trampoline-1' class='method'><code>fn <a href='#method.trampoline' class='fnname'>trampoline</a>(&amp;self) -&gt; T::Unsafe</code></h4>
-<div class='docblock'><p>Returns an unsafe reference to the trampoline function.</p>
+<div class='docblock'><p>Returns a pointer to the trampoline function.</p>
 
-<p>Calling the returned function is always unsafe as it will point to invalid memory after the
+<p>Calling the returned function is unsafe because it will point to invalid memory after the
 hook is destroyed.</p>
 </div><h4 id='method.enable' class='method'><code>fn <a href='#method.enable' class='fnname'>enable</a>(&amp;self) -&gt; <a class='type' href='../minhook/type.Result.html' title='minhook::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Enables this hook.</p>
