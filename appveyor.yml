@@ -16,20 +16,22 @@ environment:
     secure: UHajdmalPacLa26ORMDaOwtjJP/U4KOWjlqlHOC/ZFd2wlGscrSq9f7hnpyWWHK0
 
 init:
+  - git submodule update --init --recursive
+
   - set PATH=C:\Python27;C:\Python27\Scripts;%PATH%;%APPDATA%\Python\Scripts
   - pip install "travis-cargo<0.2" --user
+
   - appveyor DownloadFile "https://static.rust-lang.org/rustup/dist/i686-pc-windows-gnu/rustup-init.exe"
   - rustup-init -y
   - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - rustup default nightly
-  - rustc -vV
-  - cargo -vV
+  - rustup target add %TARGET%
 
-install:
-  - git submodule update --init --recursive
   - if defined MSYS2_BITS set PATH=%PATH%;C:\msys64\mingw%MSYS2_BITS%\bin
   - if defined MSVC_ARCH call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %MSVC_ARCH%
-  - rustup target add %TARGET%
+
+  - rustc -vV
+  - cargo -vV
 
 build_script:
   - cargo doc --no-deps --target %TARGET%
@@ -38,5 +40,5 @@ build_script:
 test_script:
   - cargo test --target %TARGET%
 
-deploy_script:
+on_success:
   - if "%TARGET" == "i686-pc-windows-gnu" travis-cargo doc-upload
