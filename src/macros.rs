@@ -211,7 +211,7 @@ macro_rules! static_hooks {
         static_hooks!(@make_item
             #[inline(never)]
             $($fn_mod)* fn __detour($($arg_name: $arg_type),*) -> $return_type {
-                ::std::panic::recover(|| {
+                ::std::panic::catch_unwind(|| {
                     let &$crate::__StaticHookInner(_, ref closure) = __DATA.get().unwrap();
                     closure($($arg_name),*)
                 }).unwrap_or_else(|payload| $crate::panic::__handle(module_path!(), stringify!($var_name), payload))

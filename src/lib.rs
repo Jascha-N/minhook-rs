@@ -6,10 +6,8 @@
 #![feature(associated_consts,
            const_fn,
            on_unimplemented,
-           recover,
            static_mutex,
            static_rwlock,
-           std_panic,
            unboxed_closures,
            drop_types_in_const)]
 #![cfg_attr(test, feature(static_recursion))]
