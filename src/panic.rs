@@ -3,7 +3,7 @@
 use libc;
 use std::any::Any;
 use std::io::{self, Write};
-use std::panic::{self, AssertRecoverSafe};
+use std::panic::{self, AssertUnwindSafe};
 
 use sync::StaticRwCell;
 
@@ -64,9 +64,9 @@ pub fn take_handler() -> Box<Fn(&DetourPanicInfo) + Sync + Send> {
 
 #[doc(hidden)]
 pub fn __handle(path: &'static str, name: &'static str, payload: Box<Any + Send>) -> ! {
-    let payload = AssertRecoverSafe(payload);
+    let payload = AssertUnwindSafe(payload);
 
-    let _ = panic::recover(move || {
+    let _ = panic::catch_unwind(move || {
         let full_path = format!("{}::{}", path, name);
         let info = DetourPanicInfo {
             payload: &**payload,
