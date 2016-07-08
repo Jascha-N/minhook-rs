@@ -10,7 +10,8 @@
            static_mutex,
            static_rwlock,
            std_panic,
-           unboxed_closures)]
+           unboxed_closures,
+           drop_types_in_const)]
 #![cfg_attr(test, feature(static_recursion))]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
