@@ -28,7 +28,7 @@ install:
   - rustup target add %TARGET%
 
   - if defined MSYS2_BITS set PATH=%PATH%;C:\msys64\mingw%MSYS2_BITS%\bin
-  - if defined MSVC_ARCH call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %MSVC_ARCH%
+  #- if defined MSVC_ARCH call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %MSVC_ARCH%
 
   - rustc -vV
   - cargo -vV
