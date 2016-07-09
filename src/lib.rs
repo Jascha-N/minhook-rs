@@ -75,15 +75,17 @@ impl HookQueue {
         try!(initialize());
         let _lock = LOCK.lock().unwrap();
 
-        for &(target, enabled) in &*self.0 {
-            // Any failure at this point is a bug.
-            if enabled {
-                unsafe { s2r(ffi::MH_QueueEnableHook(target.to_raw())).unwrap() };
-            } else {
-                unsafe { s2r(ffi::MH_QueueDisableHook(target.to_raw())).unwrap() };
+        unsafe {
+            for &(target, enabled) in &self.0 {
+                // Any failure at this point is a bug.
+                if enabled {
+                    s2r(ffi::MH_QueueEnableHook(target.to_raw())).unwrap();
+                } else {
+                    s2r(ffi::MH_QueueDisableHook(target.to_raw())).unwrap();
+                }
             }
+            s2r(ffi::MH_ApplyQueued())
         }
-        unsafe { s2r(ffi::MH_ApplyQueued()) }
     }
 }
 
@@ -253,9 +255,8 @@ impl<'a> FunctionId<'a> {
 /// #[ATTR]* pub? impl HOOK_VAR_NAME for "FUNCTION" in "MODULE": FN_TYPE;
 /// ```
 ///
-/// Before accessing this hook it is **required** to call `initialize()` **once**. Accessing the
-/// hook before initializing or trying to initialize the hook twice (even after the first attempt
-/// failed) will result in a panic.
+/// Before accessing this hook it is **required** to call `initialize()`. Accessing the hook
+/// before initializing or trying to initialize the hook more than once will result in a panic.
 pub struct StaticHook<T: Function> {
     hook: &'static AtomicInitCell<__StaticHookInner<T>>,
     target: __StaticHookTarget<T>,
@@ -334,9 +335,8 @@ impl<T: Function> Deref for StaticHook<T> {
 /// #[ATTR]* pub? impl HOOK_VAR_NAME for "FUNCTION" in "MODULE": FN_TYPE = CLOSURE_EXPR;
 /// ```
 ///
-/// Before accessing this hook it is **required** to call `initialize()` **once**. Accessing the
-/// hook before initializing or trying to initialize the hook twice (even after the first attempt
-/// failed) will result in a panic.
+/// Before accessing this hook it is **required** to call `initialize()`. Accessing the hook
+/// before initializing or trying to initialize the hook more than once will result in a panic.
 pub struct StaticHookWithDefault<T: Function> {
     inner: StaticHook<T>,
     default: &'static (Fn<T::Args, Output = T::Output> + Sync),

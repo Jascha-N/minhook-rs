@@ -41,7 +41,7 @@ impl fmt::Pointer for FnPointer {
                             detour function."]
 pub unsafe trait Function: Sized + Copy + Sync + 'static {
     /// Unsafe version of this function.
-    type Unsafe: UnsafeFunction;
+    type Unsafe: UnsafeFunction<Args = Self::Args, Output = Self::Output>;
 
     /// The argument types as a tuple.
     type Args;
