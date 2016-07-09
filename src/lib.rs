@@ -9,9 +9,8 @@
            unboxed_closures,
            drop_types_in_const)]
 #![cfg_attr(test, feature(static_recursion))]
-#![cfg_attr(feature = "clippy", feature(plugin))]
-#![cfg_attr(feature = "clippy", plugin(clippy))]
 #![warn(missing_docs)]
+#![allow(unknown_lints)]
 
 #[macro_use]
 extern crate lazy_static;
@@ -46,12 +45,11 @@ pub type Result<T> = result::Result<T, Error>;
 
 
 /// A queue of hook changes to be applied at once.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct HookQueue(Vec<(FnPointer, bool)>);
 
 impl HookQueue {
     /// Create a new empty queue.
-    #[cfg_attr(feature = "clippy", allow(new_without_default))]
     pub fn new() -> HookQueue {
         HookQueue(Vec::new())
     }

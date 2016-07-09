@@ -27,7 +27,7 @@ impl<'a> DetourPanicInfo<'a> {
     /// Returns the name of the static hook for which the detour function
     /// panicked.
     pub fn detour(&self) -> &str {
-        &self.detour
+        self.detour
     }
 }
 
