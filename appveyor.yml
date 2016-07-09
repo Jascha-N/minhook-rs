@@ -5,40 +5,49 @@ branches:
 environment:
   matrix:
   - TARGET: i686-pc-windows-msvc
-    MSVC_ARCH: x86
+    #FIXME: documentation upload currently broken
+    #DOC: true
   - TARGET: x86_64-pc-windows-msvc
-    MSVC_ARCH: amd64
-  - TARGET: i686-pc-windows-gnu
-    MSYS2_BITS: 32
+  #FIXME: msys2 32-bits mingw broken
+  #- TARGET: i686-pc-windows-gnu
+  #  MSYS2_BITS: 32
   - TARGET: x86_64-pc-windows-gnu
     MSYS2_BITS: 64
+  HOST: x86_64-pc-windows-msvc
   GH_TOKEN:
     secure: UHajdmalPacLa26ORMDaOwtjJP/U4KOWjlqlHOC/ZFd2wlGscrSq9f7hnpyWWHK0
+
+cache:
+  - '%USERPROFILE%\.cargo -> appveyor.yml'
+  - '%USERPROFILE%\.multirust -> appveyor.yml'
 
 install:
   - git submodule update --init --recursive
 
-  - set PATH=C:\Python27;C:\Python27\Scripts;%PATH%;%APPDATA%\Python\Scripts
+  - set PATH=C:\Python27\Scripts;%APPDATA%\Python\Scripts;%PATH%
   - pip install "travis-cargo<0.2" --user
 
-  - appveyor DownloadFile "https://static.rust-lang.org/rustup/dist/i686-pc-windows-gnu/rustup-init.exe"
-  - rustup-init -y
-  - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
-  - rustup default nightly
-  - rustup target add %TARGET%
+  - curl -sSOJL "https://win.rustup.rs/"
+  - rustup-init -vV
+  - rustup-init -y --default-toolchain nightly --default-host %HOST%
+  - set PATH=%USERPROFILE%\.cargo\bin;%PATH%
+  - if not "%TARGET%" == "%HOST%" rustup target add %TARGET%
 
-  - if defined MSYS2_BITS set PATH=%PATH%;C:\msys64\mingw%MSYS2_BITS%\bin
+  - if defined MSYS2_BITS set PATH=C:\msys64\mingw%MSYS2_BITS%\bin;%PATH%
   #- if defined MSVC_ARCH call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %MSVC_ARCH%
 
   - rustc -vV
   - cargo -vV
 
-build_script:
-  - cargo doc --no-deps --target %TARGET%
-  - cargo package --target %TARGET%
+  #- cargo install clippy
+
+  - set CARGO_TARGET_DIR=target
+
+build: off
 
 test_script:
   - cargo test --target %TARGET%
+  #- cargo clippy --target %TARGET%
 
-on_success:
-  - if "%TARGET" == "i686-pc-windows-gnu" travis-cargo doc-upload
+deploy_script:
+  - if defined DOC cargo doc --no-deps --target %TARGET% && travis-cargo doc-upload
