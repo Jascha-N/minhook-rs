@@ -1,7 +1,9 @@
 use std::{mem, ptr};
-use std::cell::UnsafeCell;
-use std::sync::StaticRwLock;
+use std::cell::RefCell;
+use std::sync::RwLock;
 use std::sync::atomic::{AtomicPtr, Ordering};
+
+use lazy_static::lazy::Lazy;
 
 
 
@@ -36,47 +38,39 @@ impl<T> AtomicInitCell<T> {
 
 
 
-pub struct StaticRwCell<T> {
-    data: UnsafeCell<T>,
-    lock: StaticRwLock,
+pub struct StaticRwCell<T: Send + Sync> {
+    init: RefCell<Option<T>>,
+    lock: Lazy<RwLock<T>>
 }
 
-impl<T> StaticRwCell<T> {
+impl<T: Send + Sync> StaticRwCell<T> {
     pub const fn new(value: T) -> StaticRwCell<T> {
         StaticRwCell {
-            data: UnsafeCell::new(value),
-            lock: StaticRwLock::new()
+            init: RefCell::new(Some(value)),
+            lock: Lazy::new()
         }
     }
 
-    unsafe fn set_unsync(&self, value: T) {
-        *self.data.get() = value
-    }
-
-    unsafe fn get_ref_unsync(&self) -> &T {
-        &*self.data.get()
+    fn lock(&'static self) -> &RwLock<T> {
+        self.lock.get(|| RwLock::new(self.init.borrow_mut().take().unwrap()))
     }
 
     pub fn set(&'static self, value: T) {
-        let _lock = self.lock.write();
-
-        unsafe { self.set_unsync(value); }
+        let mut data = self.lock().write().unwrap();
+        *data = value;
     }
 
     pub fn with<F, R>(&'static self, f: F) -> R
     where F: FnOnce(&T) -> R {
-        let _lock = self.lock.read();
-
-        unsafe { f(self.get_ref_unsync()) }
+        let data = self.lock().read().unwrap();
+        f(&*data)
     }
 }
 
-impl<T> StaticRwCell<Option<T>> {
+impl<T: Send + Sync> StaticRwCell<Option<T>> {
     pub fn take(&'static self) -> Option<T> {
-        let _lock = self.lock.write();
-
-        let option = unsafe { &mut *self.data.get() };
-        option.take()
+        let mut data = self.lock().write().unwrap();
+        data.take()
     }
 }
 

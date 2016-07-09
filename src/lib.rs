@@ -6,8 +6,6 @@
 #![feature(associated_consts,
            const_fn,
            on_unimplemented,
-           static_mutex,
-           static_rwlock,
            unboxed_closures,
            drop_types_in_const)]
 #![cfg_attr(test, feature(static_recursion))]
@@ -15,6 +13,8 @@
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 #![warn(missing_docs)]
 
+#[macro_use]
+extern crate lazy_static;
 extern crate libc;
 extern crate kernel32;
 extern crate winapi;
@@ -23,7 +23,7 @@ use std::{mem, ptr, result};
 use std::ffi::OsStr;
 use std::ops::Deref;
 use std::os::windows::ffi::OsStrExt;
-use std::sync::StaticMutex;
+use std::sync::Mutex;
 
 use function::{Function, FnPointer, HookableWith};
 
@@ -70,7 +70,9 @@ impl HookQueue {
 
     /// Applies all the changes in this queue at once.
     pub fn apply(&mut self) -> Result<()> {
-        static LOCK: StaticMutex = StaticMutex::new();
+        lazy_static! {
+            static ref LOCK: Mutex<()> = Mutex::new(());
+        }
 
         try!(initialize());
         let _lock = LOCK.lock().unwrap();
