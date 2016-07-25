@@ -5,8 +5,7 @@ branches:
 environment:
   matrix:
   - TARGET: i686-pc-windows-msvc
-    #FIXME: documentation upload currently broken
-    #DOC: true
+    DOC: true
   - TARGET: x86_64-pc-windows-msvc
   #FIXME: msys2 32-bits mingw broken
   #- TARGET: i686-pc-windows-gnu
@@ -17,15 +16,11 @@ environment:
   GH_TOKEN:
     secure: UHajdmalPacLa26ORMDaOwtjJP/U4KOWjlqlHOC/ZFd2wlGscrSq9f7hnpyWWHK0
 
-cache:
-  - '%USERPROFILE%\.cargo -> appveyor.yml'
-  - '%USERPROFILE%\.multirust -> appveyor.yml'
-
 install:
   - git submodule update --init --recursive
 
   - set PATH=C:\Python27\Scripts;%APPDATA%\Python\Scripts;%PATH%
-  - pip install "travis-cargo<0.2" --user
+  - pip install "travis-cargo<0.2" --user --disable-pip-version-check
 
   - curl -sSOJL "https://win.rustup.rs/"
   - rustup-init -vV
@@ -34,7 +29,6 @@ install:
   - if not "%TARGET%" == "%HOST%" rustup target add %TARGET%
 
   - if defined MSYS2_BITS set PATH=C:\msys64\mingw%MSYS2_BITS%\bin;%PATH%
-  #- if defined MSVC_ARCH call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %MSVC_ARCH%
 
   - rustc -vV
   - cargo -vV
@@ -50,4 +44,4 @@ test_script:
   #- cargo clippy --target %TARGET%
 
 deploy_script:
-  - if defined DOC cargo doc --no-deps --target %TARGET% && travis-cargo doc-upload
+  - if defined DOC cargo doc --no-deps --target %TARGET% && cd target\%TARGET% && travis-cargo doc-upload
