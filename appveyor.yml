@@ -5,7 +5,6 @@ branches:
 environment:
   matrix:
   - TARGET: i686-pc-windows-msvc
-    DOC: true
   - TARGET: x86_64-pc-windows-msvc
   #FIXME: msys2 32-bits mingw broken
   #- TARGET: i686-pc-windows-gnu
@@ -44,4 +43,4 @@ test_script:
   #- cargo clippy --target %TARGET%
 
 deploy_script:
-  - if defined DOC cargo doc --no-deps --target %TARGET% && cd target\%TARGET% && travis-cargo doc-upload
+  - if "%TARGET%" == "%HOST%" cargo doc --no-deps && travis-cargo doc-upload
