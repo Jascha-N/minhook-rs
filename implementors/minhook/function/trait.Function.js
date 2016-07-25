@@ -1,5 +1,5 @@
 (function() {var implementors = {};
-implementors['minhook'] = [];
+implementors["minhook"] = [];
 
             if (window.register_implementors) {
                 window.register_implementors(implementors);
