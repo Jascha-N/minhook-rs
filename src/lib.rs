@@ -400,7 +400,7 @@ fn s2r(status: ffi::MH_STATUS) -> Result<()> {
 
 
 #[doc(hidden)]
-pub struct __StaticHookInner<T: Function>(Hook<T>, pub &'static (Fn<T::Args, Output = T::Output> + Sync));
+pub struct __StaticHookInner<T: Function>(pub Hook<T>, pub &'static (Fn<T::Args, Output = T::Output> + Sync));
 
 #[doc(hidden)]
 pub enum __StaticHookTarget<T: Function> {
