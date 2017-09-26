@@ -7,7 +7,10 @@
            const_fn,
            on_unimplemented,
            unboxed_closures,
-           drop_types_in_const)]
+           drop_types_in_const,
+           const_ptr_null_mut,
+           const_refcell_new,
+           const_atomic_ptr_new)]
 #![cfg_attr(test, feature(static_recursion))]
 #![warn(missing_docs)]
 #![allow(unknown_lints)]
