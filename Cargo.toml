@@ -15,7 +15,7 @@ libc = "0.2"
 winapi = "0.2"
 
 [dependencies.lazy_static]
-version = "0.2"
+version = "1.4.0"
 features = ["nightly"]
 
 [build-dependencies]
