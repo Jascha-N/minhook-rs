@@ -3,11 +3,7 @@
 //! wrapper around the [MinHook][minhook] library.
 //!
 //! [minhook]: http://www.codeproject.com/KB/winsdk/LibMinHook.aspx
-#![feature(associated_consts,
-           const_fn,
-           on_unimplemented,
-           unboxed_closures,
-           drop_types_in_const)]
+#![feature(rustc_attrs, unboxed_closures)]
 #![cfg_attr(test, feature(static_recursion))]
 #![warn(missing_docs)]
 #![allow(unknown_lints)]

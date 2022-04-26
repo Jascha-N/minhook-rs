@@ -1,11 +1,9 @@
-use std::{mem, ptr};
 use std::cell::RefCell;
-use std::sync::RwLock;
 use std::sync::atomic::{AtomicPtr, Ordering};
+use std::sync::RwLock;
+use std::{mem, ptr};
 
 use lazy_static::lazy::Lazy;
-
-
 
 #[doc(hidden)]
 pub struct AtomicInitCell<T>(AtomicPtr<T>);
@@ -19,7 +17,11 @@ impl<T> AtomicInitCell<T> {
     #[doc(hidden)]
     pub fn initialize(&self, value: T) -> Result<(), ()> {
         let mut boxed = Box::new(value);
-        if !self.0.compare_and_swap(ptr::null_mut(), &mut *boxed, Ordering::SeqCst).is_null() {
+        if !self
+            .0
+            .compare_and_swap(ptr::null_mut(), &mut *boxed, Ordering::SeqCst)
+            .is_null()
+        {
             return Err(());
         }
         mem::forget(boxed);
@@ -36,23 +38,22 @@ impl<T> AtomicInitCell<T> {
     }
 }
 
-
-
 pub struct StaticRwCell<T: Send + Sync> {
     init: RefCell<Option<T>>,
-    lock: Lazy<RwLock<T>>
+    lock: Lazy<RwLock<T>>,
 }
 
 impl<T: Send + Sync> StaticRwCell<T> {
     pub const fn new(value: T) -> StaticRwCell<T> {
         StaticRwCell {
             init: RefCell::new(Some(value)),
-            lock: Lazy::new()
+            lock: Lazy::INIT,
         }
     }
 
     fn lock(&'static self) -> &RwLock<T> {
-        self.lock.get(|| RwLock::new(self.init.borrow_mut().take().unwrap()))
+        self.lock
+            .get(|| RwLock::new(self.init.borrow_mut().take().unwrap()))
     }
 
     pub fn set(&'static self, value: T) {
@@ -61,7 +62,9 @@ impl<T: Send + Sync> StaticRwCell<T> {
     }
 
     pub fn with<F, R>(&'static self, f: F) -> R
-    where F: FnOnce(&T) -> R {
+    where
+        F: FnOnce(&T) -> R,
+    {
         let data = self.lock().read().unwrap();
         f(&*data)
     }
