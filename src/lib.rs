@@ -68,7 +68,7 @@ impl HookQueue {
             static ref LOCK: Mutex<()> = Mutex::new(());
         }
 
-        try!(initialize());
+        initialize()?;
         let _lock = LOCK.lock().unwrap();
 
         unsafe {
@@ -111,15 +111,15 @@ impl<T: Function> Hook<T> {
     /// or LLVM decide to merge multiple functions with the same code into one.
     pub unsafe fn create<D>(target: T, detour: D) -> Result<Hook<T>>
     where T: HookableWith<D>, D: Function {
-        try!(initialize());
+        initialize()?;
 
         let target = target.to_ptr();
         let detour = detour.to_ptr();
         let mut trampoline = mem::uninitialized();
-        try!(s2r(ffi::MH_CreateHook(target.to_raw(), detour.to_raw(), &mut trampoline)));
+        s2r(ffi::MH_CreateHook(target.to_raw(), detour.to_raw(), &mut trampoline))?;
 
         Ok(Hook {
-            target: target,
+            target,
             trampoline: T::from_ptr(FnPointer::from_raw(trampoline)),
         })
     }
@@ -173,14 +173,14 @@ impl<T: Function> Hook<T> {
         };
 
         let detour = detour.to_ptr();
-        let mut trampoline = mem::uninitialized();
-        let mut target = mem::uninitialized();
+        let mut trampoline = mem::MaybeUninit::uninit();
+        let mut target = mem::MaybeUninit::uninit();
 
-        try!(s2r(ffi::MH_CreateHookApiEx(module_name.as_ptr(), function_name, detour.to_raw(), &mut trampoline, &mut target)));
+        s2r(ffi::MH_CreateHookApiEx(module_name.as_ptr(), function_name, detour.to_raw(), &mut trampoline, &mut target))?;
 
         Ok(Hook {
-            target: FnPointer::from_raw(target),
-            trampoline: T::from_ptr(FnPointer::from_raw(trampoline)),
+            target: FnPointer::from_raw(target.as_mut_ptr()),
+            trampoline: T::from_ptr(FnPointer::from_raw(trampoline.as_mut_ptr())),
         })
     }
 
@@ -276,16 +276,16 @@ impl<T: Function> StaticHook<T> {
 
     unsafe fn initialize_ref(&self, closure: &'static (Fn<T::Args, Output = T::Output> + Sync)) -> Result<()> {
         let hook = match self.target {
-            __StaticHookTarget::Static(target) => try!(Hook::create(target, self.detour)),
+            __StaticHookTarget::Static(target) => Hook::create(target, self.detour)?,
             __StaticHookTarget::Dynamic(module_name, function_name) =>
-                try!(Hook::create_api(module_name, FunctionId::name(function_name), self.detour))
+                Hook::create_api(module_name, FunctionId::name(function_name), self.detour)?
         };
 
         Ok(self.hook.initialize(__StaticHookInner(hook, closure)).expect("static hook already initialized"))
     }
 
     unsafe fn initialize_box(&self, closure: Box<Fn<T::Args, Output = T::Output> + Sync>) -> Result<()> {
-        try!(self.initialize_ref(&*(&*closure as *const _)));
+        self.initialize_ref(&*(&*closure as *const _))?;
         mem::forget(closure);
         Ok(())
     }
