@@ -1,3 +1,0 @@
-[submodule "src/minhook"]
-	path = src/minhook
-	url = https://github.com/Wazed-Matthis/minhook
