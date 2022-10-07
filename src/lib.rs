@@ -15,7 +15,7 @@ extern crate kernel32;
 extern crate winapi;
 
 use std::{mem, ptr, result};
-use std::ffi::OsStr;
+use std::ffi::{c_void, OsStr};
 use std::ops::Deref;
 use std::os::windows::ffi::OsStrExt;
 use std::sync::Mutex;
@@ -176,7 +176,7 @@ impl<T: Function> Hook<T> {
         let mut trampoline = mem::MaybeUninit::uninit();
         let mut target = mem::MaybeUninit::uninit();
 
-        s2r(ffi::MH_CreateHookApiEx(module_name.as_ptr(), function_name, detour.to_raw(), &mut trampoline, &mut target))?;
+        s2r(ffi::MH_CreateHookApiEx(module_name.as_ptr(), function_name, detour.to_raw(), trampoline.as_mut_ptr() as *mut *mut c_void, target.as_mut_ptr() as *mut *mut c_void))?;
 
         Ok(Hook {
             target: FnPointer::from_raw(target.as_mut_ptr()),
