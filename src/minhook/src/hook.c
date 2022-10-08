@@ -64,7 +64,7 @@ typedef struct _HOOK_ENTRY
     LPVOID pTarget;             // Address of the target function.
     LPVOID pDetour;             // Address of the detour or relay function.
     LPVOID pTrampoline;         // Address of the trampoline function.
-    UINT8  backup[8];           // Original prologue of the target function.
+    UINT8  backup[10];           // Original prologue of the target function.
 
     UINT8  patchAbove  : 1;     // Uses the hot patch area.
     UINT8  isEnabled   : 1;     // Enabled.
@@ -381,7 +381,7 @@ static MH_STATUS EnableHookLL(UINT pos, BOOL enable)
     }
     else
     {
-            memcpy(pPatchTarget, pHook->backup, 8);
+            memcpy(pPatchTarget, pHook->backup, 10);
     }
 
     MyVirtualProtect(pPatchTarget, patchSize, oldProtect, &oldProtect);
@@ -582,7 +582,7 @@ MH_STATUS WINAPI MH_CreateHook(LPVOID pTarget, LPVOID pDetour, LPVOID *ppOrigina
                             }
                             else
                             {
-                                memcpy(pHook->backup, pTarget, sizeof(JMP_REL));
+                                memcpy(pHook->backup, pTarget, 10);
                             }
 
                             if (ppOriginal != NULL)
