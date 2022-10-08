@@ -25,6 +25,7 @@ fn main() {
         .file(src_dir.join("buffer.c"))
         .file(src_dir.join("hook.c"))
         .file(src_dir.join("trampoline.c"))
+        .file(src_dir.join("api.c"))
         .file(src_dir.join(hde))
         .compile("libminhook.a");
 
