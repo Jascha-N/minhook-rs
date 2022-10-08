@@ -382,9 +382,9 @@ static MH_STATUS EnableHookLL(UINT pos, BOOL enable)
     else
     {
         if (pHook->patchAbove)
-            my_memcpy(pPatchTarget, pHook->backup, sizeof(JMP_REL) + sizeof(JMP_REL_SHORT));
+            memcpy(pPatchTarget, pHook->backup, sizeof(JMP_REL) + sizeof(JMP_REL_SHORT));
         else
-            my_memcpy(pPatchTarget, pHook->backup, sizeof(PUSH_RET));
+            memcpy(pPatchTarget, pHook->backup, sizeof(PUSH_RET));
     }
 
     MyVirtualProtect(pPatchTarget, patchSize, oldProtect, &oldProtect);
@@ -571,21 +571,21 @@ MH_STATUS WINAPI MH_CreateHook(LPVOID pTarget, LPVOID pDetour, LPVOID *ppOrigina
                             pHook->isEnabled   = FALSE;
                             pHook->queueEnable = FALSE;
                             pHook->nIP         = ct.nIP;
-                            my_memcpy(pHook->oldIPs, ct.oldIPs, ARRAYSIZE(ct.oldIPs));
-                            my_memcpy(pHook->newIPs, ct.newIPs, ARRAYSIZE(ct.newIPs));
+                            memcpy(pHook->oldIPs, ct.oldIPs, ARRAYSIZE(ct.oldIPs));
+                            memcpy(pHook->newIPs, ct.newIPs, ARRAYSIZE(ct.newIPs));
 
                             // Back up the target function.
 
                             if (ct.patchAbove)
                             {
-                                my_memcpy(
+                                memcpy(
                                     pHook->backup,
                                     (LPBYTE)pTarget - sizeof(JMP_REL),
                                     sizeof(JMP_REL) + sizeof(JMP_REL_SHORT));
                             }
                             else
                             {
-                                my_memcpy(pHook->backup, pTarget, sizeof(JMP_REL));
+                                memcpy(pHook->backup, pTarget, sizeof(JMP_REL));
                             }
 
                             if (ppOriginal != NULL)

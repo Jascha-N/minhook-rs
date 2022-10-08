@@ -28,24 +28,7 @@ typedef struct _THREAD_BASIC_INFORMATION {
 
 #pragma optimize( "", off )
 // Unless used, the compiler will try to replaced this with 'memset'
-void * my_memset(void *s, int c, size_t n)
-{
-    unsigned char* p = s;
-    while (n--)
-        *p++ = (unsigned char)c;
-    return s;
-}
 
-void* my_memcpy(void* destination, void* source, size_t num)
-{
-    int i;
-    char* d = destination;
-    char* s = source;
-    for (i = 0; i < num; i++) {
-        d[i] = s[i];
-    }
-    return destination;
-}
 #pragma optimize( "", on ) 
 
 NTSYSAPI
@@ -582,7 +565,7 @@ void WINAPI MyGetSystemInfo(
     _Out_ LPSYSTEM_INFO lpSystemInfo
 )
 {
-    my_memset(lpSystemInfo, 0x00, sizeof(*lpSystemInfo));
+    memset(lpSystemInfo, 0x00, sizeof(*lpSystemInfo));
 
     // Only initialize the members of SYSTEM_INFO that will actually be used by MinHook.
     lpSystemInfo->dwAllocationGranularity = 64 * 1024;

@@ -242,7 +242,7 @@ LPVOID AllocateBuffer(LPVOID pOrigin)
     pBlock->usedCount++;
 #ifdef _DEBUG
     // Fill the slot with INT3 for debugging.
-    my_memset(pSlot, 0xCC, sizeof(MEMORY_SLOT));
+    memset(pSlot, 0xCC, sizeof(MEMORY_SLOT));
 #endif
     return pSlot;
 }
@@ -261,7 +261,7 @@ VOID FreeBuffer(LPVOID pBuffer)
             PMEMORY_SLOT pSlot = (PMEMORY_SLOT)pBuffer;
 #ifdef _DEBUG
             // Clear the released slot for debugging.
-            my_memset(pSlot, 0x00, sizeof(*pSlot));
+            memset(pSlot, 0x00, sizeof(*pSlot));
 #endif
             // Restore the released slot to the list.
             pSlot->pNext = pBlock->pFree;

@@ -17,7 +17,7 @@ unsigned int hde32_disasm(const void *code, hde32s *hs)
 
     // Avoid using memset to reduce the footprint.
 #ifndef _MSC_VER
-    my_memset((LPBYTE)hs, 0, sizeof(hde32s));
+    memset((LPBYTE)hs, 0, sizeof(hde32s));
 #else
     __stosb((LPBYTE)hs, 0, sizeof(hde32s));
 #endif
