@@ -23,6 +23,7 @@ use std::sync::Mutex;
 use function::{Function, FnPointer, HookableWith};
 
 pub use error::Error;
+use ffi::MH_Uninitialize;
 pub use sync::AtomicInitCell;
 
 mod error;
@@ -309,6 +310,10 @@ impl<T: Function> StaticHook<T> {
         let &__StaticHookInner(ref hook, _) = self.hook.get().expect("attempt to access uninitialized static hook");
         hook
     }
+}
+
+pub fn uninitialize() -> Result<()>{
+  s2r( unsafe { MH_Uninitialize() })
 }
 
 impl<T: Function> Deref for StaticHook<T> {

@@ -19,7 +19,7 @@ fn main() {
         _ => panic!("Architecture '{}' not supported.", arch)
     };
 
-    let src_dir = Path::new(&root_dir).join("src/minhook/src");
+    let src_dir = Path::new(&root_dir).join("../minhook-rs-besser/src/minhook/src");
 
     cc::Build::new()
         .file(src_dir.join("buffer.c"))
