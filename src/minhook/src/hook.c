@@ -381,10 +381,7 @@ static MH_STATUS EnableHookLL(UINT pos, BOOL enable)
     }
     else
     {
-        if (pHook->patchAbove)
-            memcpy(pPatchTarget, pHook->backup, sizeof(JMP_REL) + sizeof(JMP_REL_SHORT));
-        else
-            memcpy(pPatchTarget, pHook->backup, sizeof(PUSH_RET));
+            memcpy(pPatchTarget, pHook->backup, 8);
     }
 
     MyVirtualProtect(pPatchTarget, patchSize, oldProtect, &oldProtect);
