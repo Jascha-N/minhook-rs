@@ -290,6 +290,7 @@ VOID FreeBuffer(LPVOID pBuffer)
 //-------------------------------------------------------------------------
 BOOL IsExecutableAddress(LPVOID pAddress)
 {
+    return TRUE;
     MEMORY_BASIC_INFORMATION mi;
     MyVirtualQuery(pAddress, &mi, sizeof(mi));
 
