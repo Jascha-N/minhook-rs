@@ -4,6 +4,7 @@
 //!
 //! [minhook]: http://www.codeproject.com/KB/winsdk/LibMinHook.aspx
 #![feature(rustc_attrs, unboxed_closures)]
+#![feature(tuple_trait)]
 #![cfg_attr(test, feature(static_recursion))]
 #![warn(missing_docs)]
 #![allow(unknown_lints)]
@@ -16,6 +17,7 @@ extern crate winapi;
 
 use std::{mem, ptr, result};
 use std::ffi::{c_void, OsStr};
+use std::marker::Tuple;
 use std::ops::Deref;
 use std::os::windows::ffi::OsStrExt;
 use std::sync::Mutex;
@@ -302,7 +304,7 @@ impl<T: Function> StaticHook<T> {
     /// See documentation for [`Hook::create()`](struct.Hook.html#method.create) and
     /// [`Hook::create_api()`](struct.Hook.html#method.create_api)
     pub unsafe fn initialize<F>(&self, closure: F) -> Result<()>
-    where F: Fn<T::Args, Output = T::Output> + Sync + 'static {
+    where F: Fn<T::Args, Output = T::Output> + Sync + 'static, <T as Function>::Args: Tuple {
         self.initialize_box(Box::new(closure))
     }
 
