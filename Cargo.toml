@@ -15,11 +15,10 @@ libc = "0.2"
 winapi = "0.2"
 
 [dependencies.lazy_static]
-version = "0.2"
-features = ["nightly"]
+version = "1.4.0"
 
 [build-dependencies]
-gcc = "0.3"
+cc = "1.0.73"
 
 [features]
 increased_arity = []

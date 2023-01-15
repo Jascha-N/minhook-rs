@@ -3,11 +3,8 @@
 //! wrapper around the [MinHook][minhook] library.
 //!
 //! [minhook]: http://www.codeproject.com/KB/winsdk/LibMinHook.aspx
-#![feature(associated_consts,
-           const_fn,
-           on_unimplemented,
-           unboxed_closures,
-           drop_types_in_const)]
+#![feature(rustc_attrs, unboxed_closures)]
+#![feature(tuple_trait)]
 #![cfg_attr(test, feature(static_recursion))]
 #![warn(missing_docs)]
 #![allow(unknown_lints)]
@@ -19,7 +16,8 @@ extern crate kernel32;
 extern crate winapi;
 
 use std::{mem, ptr, result};
-use std::ffi::OsStr;
+use std::ffi::{c_void, OsStr};
+use std::marker::Tuple;
 use std::ops::Deref;
 use std::os::windows::ffi::OsStrExt;
 use std::sync::Mutex;
@@ -27,6 +25,7 @@ use std::sync::Mutex;
 use function::{Function, FnPointer, HookableWith};
 
 pub use error::Error;
+use ffi::MH_Uninitialize;
 pub use sync::AtomicInitCell;
 
 mod error;
@@ -72,7 +71,7 @@ impl HookQueue {
             static ref LOCK: Mutex<()> = Mutex::new(());
         }
 
-        try!(initialize());
+        initialize()?;
         let _lock = LOCK.lock().unwrap();
 
         unsafe {
@@ -115,15 +114,15 @@ impl<T: Function> Hook<T> {
     /// or LLVM decide to merge multiple functions with the same code into one.
     pub unsafe fn create<D>(target: T, detour: D) -> Result<Hook<T>>
     where T: HookableWith<D>, D: Function {
-        try!(initialize());
+        initialize()?;
 
         let target = target.to_ptr();
         let detour = detour.to_ptr();
         let mut trampoline = mem::uninitialized();
-        try!(s2r(ffi::MH_CreateHook(target.to_raw(), detour.to_raw(), &mut trampoline)));
+        s2r(ffi::MH_CreateHook(target.to_raw(), detour.to_raw(), &mut trampoline))?;
 
         Ok(Hook {
-            target: target,
+            target,
             trampoline: T::from_ptr(FnPointer::from_raw(trampoline)),
         })
     }
@@ -177,14 +176,14 @@ impl<T: Function> Hook<T> {
         };
 
         let detour = detour.to_ptr();
-        let mut trampoline = mem::uninitialized();
-        let mut target = mem::uninitialized();
+        let mut trampoline = mem::MaybeUninit::uninit();
+        let mut target = mem::MaybeUninit::uninit();
 
-        try!(s2r(ffi::MH_CreateHookApiEx(module_name.as_ptr(), function_name, detour.to_raw(), &mut trampoline, &mut target)));
+        s2r(ffi::MH_CreateHookApiEx(module_name.as_ptr(), function_name, detour.to_raw(), trampoline.as_mut_ptr() as *mut *mut c_void, target.as_mut_ptr() as *mut *mut c_void))?;
 
         Ok(Hook {
-            target: FnPointer::from_raw(target),
-            trampoline: T::from_ptr(FnPointer::from_raw(trampoline)),
+            target: FnPointer::from_raw(target.as_mut_ptr()),
+            trampoline: T::from_ptr(FnPointer::from_raw(trampoline.as_mut_ptr())),
         })
     }
 
@@ -280,16 +279,16 @@ impl<T: Function> StaticHook<T> {
 
     unsafe fn initialize_ref(&self, closure: &'static (Fn<T::Args, Output = T::Output> + Sync)) -> Result<()> {
         let hook = match self.target {
-            __StaticHookTarget::Static(target) => try!(Hook::create(target, self.detour)),
+            __StaticHookTarget::Static(target) => Hook::create(target, self.detour)?,
             __StaticHookTarget::Dynamic(module_name, function_name) =>
-                try!(Hook::create_api(module_name, FunctionId::name(function_name), self.detour))
+                Hook::create_api(module_name, FunctionId::name(function_name), self.detour)?
         };
 
         Ok(self.hook.initialize(__StaticHookInner(hook, closure)).expect("static hook already initialized"))
     }
 
     unsafe fn initialize_box(&self, closure: Box<Fn<T::Args, Output = T::Output> + Sync>) -> Result<()> {
-        try!(self.initialize_ref(&*(&*closure as *const _)));
+        self.initialize_ref(&*(&*closure as *const _))?;
         mem::forget(closure);
         Ok(())
     }
@@ -305,7 +304,7 @@ impl<T: Function> StaticHook<T> {
     /// See documentation for [`Hook::create()`](struct.Hook.html#method.create) and
     /// [`Hook::create_api()`](struct.Hook.html#method.create_api)
     pub unsafe fn initialize<F>(&self, closure: F) -> Result<()>
-    where F: Fn<T::Args, Output = T::Output> + Sync + 'static {
+    where F: Fn<T::Args, Output = T::Output> + Sync + 'static, <T as Function>::Args: Tuple {
         self.initialize_box(Box::new(closure))
     }
 
@@ -313,6 +312,10 @@ impl<T: Function> StaticHook<T> {
         let &__StaticHookInner(ref hook, _) = self.hook.get().expect("attempt to access uninitialized static hook");
         hook
     }
+}
+
+pub fn uninitialize() -> Result<()>{
+  s2r( unsafe { MH_Uninitialize() })
 }
 
 impl<T: Function> Deref for StaticHook<T> {
